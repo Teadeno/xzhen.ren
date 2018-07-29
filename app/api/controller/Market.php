@@ -179,7 +179,7 @@ class Market extends Base
     }
 
     /**
-     * 藏宝阁
+     * 藏宝阁购买
      * 购买道具
      */
     public function CbkBuyGoods()
@@ -188,6 +188,9 @@ class Market extends Base
 
         if (!isset($this->post['id'])) {
             return $this->showReturnWithCode(1001);
+        }
+        if (empty($this->post['num']) || $this->post['num'] <= 0) {
+            return $this->showReturn('购买数量不正确');
         }
         $map = ['user_id' => $this->user_id];
         $id = $this->post['id'];
