@@ -1,0 +1,46 @@
+
+
+# ��������301��ת���ã����Զ��޸�Ϊ��������
+ if ($Host = 'xxx.com'){
+ rewrite ^/(.*)$ http://www.phpwamp.com/$1 permanent;
+                 }
+
+
+
+
+
+
+#����Ϊphpwind9.0α��̬����,ȥ�������#������Ч
+#------------------------------------------------------------------------------------------------
+
+# if (-f $request_filename) {
+#           break;
+#   }
+#    if ($request_filename ~* "\.(js|ico|gif|jpe?g|bmp|png|css)$") {
+#       break;
+#   }
+#   if (!-e $request_filename) {
+#       rewrite . /index.php last;
+#   }
+
+
+
+
+
+# �����ThinkPHP V5α��̬����ʾ�� ��ȥ�����´���ǰ�ߵ�#�ż�����Ч
+
+if (!-e $request_filename) {
+    rewrite  ^(.*)$  /index.php?s=/$1  last;
+   break;
+   }
+
+
+
+
+
+
+
+
+
+
+
