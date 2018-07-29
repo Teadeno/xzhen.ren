@@ -433,7 +433,7 @@ class Pay extends Base
             if (empty($user)) {
                 return $this->showReturn('用户不存在');
             }
-            $data = [];
+
             $info['order_sn'] = guid();
             $info['user_id'] = $this->user_id;
             $info['username'] = $user->username;
