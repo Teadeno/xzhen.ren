@@ -1,29 +1,6 @@
 <?php
 return [
-    'alipay' => [
-        //APPID
-        'appId' => '',
-        //签名方式
-        'signType' => 'RSA2',
-        //异步回调地址
-        'notify_url' => 'http://www.xzhen.ren/api/pay/ail_notify',
-        //开发者私钥
-        'rsaPrivateKey' => '',
-        //支付宝公钥
-        'alipayrsaPublicKey' => ''
-    ],
-    'wxpay' => [
-        //APPID
-        'appId' => 'wxb1f9a2f9810950dd',
-        //商户号
-        'mchid' => '1509867871',
-        //私钥
-        'key' => 'e38b273349af27cea2cc71d72f50c0c5',
-        //异步回调地址
-        'notify_url' => 'http://www.xzhen.ren/api/pay/wx_notify',
-        //AppSecret 获取open_id需要
-        'secret' => '67f1231a5438bec0e78b8a99b4b7dddc'
-    ],
+  
     'goods' => [
         'czjj18' => [
             'name' => '成长基金购买',
