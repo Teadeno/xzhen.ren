@@ -56,12 +56,7 @@ class User extends Base
      */
     public function index()
     {
-        /* 前端需要数据  user表           username玩家昵称  sex性别
-                         user_resource 表  lingshi灵石数量  prestige声望数量  quality修为值    practice_speed修炼速度  realm_id当前境界名称 当前境界为几阶
-                         user_log 表    玩家日志信息
-        */
-        //在首页获取的时候增加修为值
-
+    
         $map = ['user_id' => $this->user_id];
         Hook::listen('sync_quality', $map);
         $user_resource = UserResource::findMap($map, 'quality, realm_id, create_time');
