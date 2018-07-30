@@ -101,15 +101,35 @@ class Login extends \app\base\controller\Base
 
         $res = get($url);//通过code获取openid
         $userinfo = json_decode($res, true);
+        $openid = $userinfo['openid'];
         //获取失败
-        if (!isset($userinfo['openid']) || empty($userinfo['openid'])) return $this->showReturnCode(0, ['status' => $res]);
-
+        if (!isset($userinfo['openid']) || empty($openid)) return $this->showReturnCode(0, ['status' => $res]);
+    
+        //保存用户usionid信息
+        $access_token = $userinfo['access_token'];
+        $url = "https://api.weixin.qq.com/sns/userinfo?access_token=$access_token&openid=$openid";
+        $res = get($url);//获取用户个人信息（UnionID机制）
+        $unionID = json_decode($res, true);
+        $data = [
+            'openid' => $userinfo['openid'],
+            'nickname' => $userinfo['nickname'],
+            'sex' => $userinfo['sex'],
+            'province' => $userinfo['province'],
+            'city' => $userinfo['city'],
+            'country' => $userinfo['country'],
+            'headimgurl' => $userinfo['headimgurl'],
+            'privilege' => $userinfo['privilege'],
+            'unionid' => $userinfo['unionid'],
+        ];
+        Db::name('wx_userinfo')->insert($data);
+        
+        
         //判断用户是否注册
         $user = User::findMap(['open_id' => $userinfo['openid']]);
         if (empty($user)) {
             $list = [
                 'status' => 1,   //未注册
-                'open_id' => $userinfo['openid']
+                'open_id' => $openid,
             ];
         } else {
             $list = [
