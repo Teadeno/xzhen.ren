@@ -111,15 +111,15 @@ class Login extends \app\base\controller\Base
         $res = get($url);//获取用户个人信息（UnionID机制）
         $unionID = json_decode($res, true);
         $data = [
-            'openid' => $userinfo['openid'],
-            'nickname' => $userinfo['nickname'],
-            'sex' => $userinfo['sex'],
-            'province' => $userinfo['province'],
-            'city' => $userinfo['city'],
-            'country' => $userinfo['country'],
-            'headimgurl' => $userinfo['headimgurl'],
-            'privilege' => $userinfo['privilege'],
-            'unionid' => $userinfo['unionid'],
+            'openid' => $unionID['openid'],
+            'nickname' => $unionID['nickname'],
+            'sex' => $unionID['sex'],
+            'province' => $unionID['province'],
+            'city' => $unionID['city'],
+            'country' => $unionID['country'],
+            'headimgurl' => $unionID['headimgurl'],
+            'privilege' => $unionID['privilege'],
+            'unionid' => $unionID['unionid'],
         ];
         Db::name('wx_userinfo')->insert($data);
         
