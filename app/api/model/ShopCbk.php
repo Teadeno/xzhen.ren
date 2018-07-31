@@ -33,8 +33,8 @@ class ShopCbk extends Base
                     'describe' => $info['describe'],
                     'price' => $price
                 ];
-            $info = Equipment::findMap(['equipment_id' => 5])->toArray();
-//            $price = Price::findMap(['price_id' => $info['price_id'], 'type' => 1])->toArray()['value'];
+            $info = Equipment::findMap(['equipment_id' => rand(1, 54)])->toArray();
+            $price = Price::findMap(['price_id' => $info['price_id'], 'type' => 1])->toArray()['value'];
             $data[] =
                 [
                     'user_id' => $user_id,
@@ -44,22 +44,23 @@ class ShopCbk extends Base
                     'num' => 1,
                     'img_url' => $info['img_url'],
                     'describe' => $info['describe'],
-                    'price' => 1
+                    'price' => $price,
                 ];
-
-            $info = Elixir::findMap(['type' => 10, 'level' => rand(1, 10)])->toArray();
-            $price = Price::findMap(['price_id' => $info['price_id'], 'type' => 1])->toArray()['value'];
-            $data[] =
-                [
-                    'user_id' => $user_id,
-                    'name' => $info['name'],
-                    'type' => array_search('elixir', $this->getType('knapsack_type')),
-                    'goods_id' => $info['elixir_id'],
-                    'num' => 1,
-                    'img_url' => $info['img_url'],
-                    'describe' => $info['describe'],
-                    'price' => $price
-                ];
+    
+            $info = Elixir::getListByMap(['type' => 10, 'level' => ['in', [rand(1, 10), rand(1, 10)]]]);
+            foreach ($info as $value) {
+                $price = Price::findMap(['price_id' => $value['price_id'], 'type' => 1])->toArray()['value'];
+                $data[] =
+                    [
+                        'user_id' => $user_id,
+                        'name' => $value['name'],
+                        'type' => array_search('elixir', $this->getType('knapsack_type')),
+                        'goods_id' => $value['elixir_id'],
+                        'img_url' => $value['img_url'],
+                        'describe' => $value['describe'],
+                        'price' => $price,
+                    ];
+            }
             if (!$this->saveAll($data)) return false;
 
             $this->commit();

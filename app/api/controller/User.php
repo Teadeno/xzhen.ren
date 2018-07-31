@@ -37,8 +37,6 @@ class User extends Base
             Hook::listen('sync_mission', $data);
         }
         //检测玩家是否有未读邮件
-
-
         $unread_email = Loader::model('email')->Where(array_merge($map, ['is_read' => 0]))->count();
         $list = [
             'username' => $this->user->username,
@@ -137,8 +135,8 @@ class User extends Base
 
         if (isset($this->post['type'])) $map['type'] = $this->post['type'];
         if (!isset($this->post['type']) && $this->post['price_type'] == 2) $map['type'] = ['neq', 1];
-
-        $data = Esoterica::getListByMap($map, 'esoterica_id,name, price_id,type, level, value, f_id, steps', 'steps,esoterica_id desc');
+    
+        $data = Esoterica::getListByMap($map, 'esoterica_id,name, price_id,type, level, value, f_id, steps', 'esoterica_id desc');
         $list = $imet = [];
         foreach ($data as $key => $value) {
             //判断阶数是否满级满级直接放入不是满级 则查找下级id

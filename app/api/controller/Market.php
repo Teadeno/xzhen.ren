@@ -162,7 +162,7 @@ class Market extends Base
             //刷新减少资源
             $user_resource->lingshi = $user_resource->lingshi - 5;
             $user_resource->save();
-            ShopHj::destroy(function ($query) use ($where) {
+            ShopCbk::destroy(function ($query) use ($where) {
                 $query->where($where);
             });
         }
