@@ -72,7 +72,7 @@ class Esoterica extends Base
      *数据库增加功法
      * 录入数据用
      * */
-    private function addEsoterica()
+    private function add()
     {
         //获取门派
         $arr = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23,
@@ -163,6 +163,19 @@ class Esoterica extends Base
         return "完成";
     }
     
+    /**
+     *数据库删除功法
+     * 清空功法表  并删除关联价格
+     * */
+    private function del()
+    {
+        $data = Db::name('esoterica')->select();
+        
+        foreach ($data as $value) {
+            Db::name('price')->where('price_id', $value['price_id'])->delete();
+            Db::name('esoterica')->where('esoterica_id', $value['esoterica_id'])->delete();
+        }
+    }
     /**
      *图片路径增加域名
      * */
