@@ -43,6 +43,7 @@ class Shop extends Base
 
         $where = "create_time >= '{$start_time}' AND create_time <= '{$ent_time}' AND level = {$this->post['level']}";
         //刷新
+        Db::startTrans();
         if ($status == 1) {
             //判断资源是否足够
             if ($user_resource->top_lingshi < 5) return $this->showReturn('顶级灵石不足');
@@ -61,7 +62,7 @@ class Shop extends Base
             Loader::model('shophj')->addGoods($this->user_id, $this->post['level']);
             $data = ShopHj::getListByMap($where, $field, 'type');
         }
-
+        Db::commit();
 
         $list = [];
         $list['top_lingshi'] = $user_resource->top_lingshi;

@@ -19,35 +19,35 @@ class ShopCbk extends Base
     public function addGoods($user_id)
     {
         try {
-            $this->startTrans();
-            $info = Resource::findMap(['resource_id' => 3])->toArray();
-            $price = Price::findMap(['price_id' => $info['price_id'], 'type' => 1])->toArray()['value'];
-            $data[] =
-                [
-                    'user_id' => $user_id,
-                    'name' => $info['name'],
-                    'type' => array_search('resource', $this->getType('knapsack_type')),
-                    'goods_id' => $info['resource_id'],
-                    'num' => 1,
-                    'img_url' => $info['img_url'],
-                    'describe' => $info['describe'],
-                    'price' => $price
-                ];
-            $info = Equipment::findMap(['equipment_id' => rand(1, 54)])->toArray();
-            $price = Price::findMap(['price_id' => $info['price_id'], 'type' => 1])->toArray()['value'];
-            $data[] =
-                [
-                    'user_id' => $user_id,
-                    'name' => $info['name'],
-                    'type' => array_search('equipment', $this->getType('knapsack_type')),
-                    'goods_id' => $info['equipment_id'],
-                    'num' => 1,
-                    'img_url' => $info['img_url'],
-                    'describe' => $info['describe'],
-                    'price' => $price,
-                ];
     
-            $info = Elixir::getListByMap(['type' => 10, 'level' => ['in', [rand(1, 10), rand(1, 10)]]]);
+            /*    $info = Resource::findMap(['resource_id' => 3])->toArray();
+                $price = Price::findMap(['price_id' => $info['price_id'], 'type' => 1])->toArray()['value'];
+                $data[] =
+                    [
+                        'user_id' => $user_id,
+                        'name' => $info['name'],
+                        'type' => array_search('resource', $this->getType('knapsack_type')),
+                        'goods_id' => $info['resource_id'],
+                        'num' => 1,
+                        'img_url' => $info['img_url'],
+                        'describe' => $info['describe'],
+                        'price' => $price
+                    ];*/
+            $info = Equipment::getListByMap(['equipment_id' => ['in', [rand(1, 19), rand(20, 39), rand(40, 54)]]]);
+            foreach ($info as $value) {
+                $price = Price::findMap(['price_id' => $value['price_id'], 'type' => 1])->toArray()['value'];
+                $data[] =
+                    [
+                        'user_id' => $user_id,
+                        'name' => $value['name'],
+                        'type' => array_search('equipment', $this->getType('knapsack_type')),
+                        'goods_id' => $value['equipment_id'],
+                        'img_url' => $value['img_url'],
+                        'describe' => $value['describe'],
+                        'price' => $price,
+                    ];
+            }
+            $info = Elixir::getListByMap(['type' => 10, 'level' => ['in', [rand(1, 4), rand(5, 10)]]]);
             foreach ($info as $value) {
                 $price = Price::findMap(['price_id' => $value['price_id'], 'type' => 1])->toArray()['value'];
                 $data[] =
@@ -62,11 +62,11 @@ class ShopCbk extends Base
                     ];
             }
             if (!$this->saveAll($data)) return false;
-
-            $this->commit();
+    
+    
             return true;
         } catch (Exception $exception) {
-            $this->rollback();
+    
             return false;
         }
     }

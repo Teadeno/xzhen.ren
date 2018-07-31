@@ -20,8 +20,6 @@ class ShopHj extends Base
     public function addGoods($user_id, $level)
     {
         try {
-            $this->startTrans();
-
             //折扣
             $discount = 1 - ($level - 1) * 0.05;  //每层减少0.05
             //功法
@@ -108,11 +106,10 @@ class ShopHj extends Base
                     ];
             }
             if (!$this->saveAll($data)) return false;
-
-            $this->commit();
+    
             return true;
         } catch (PDOException $exception) {
-            $this->rollback();
+    
             return false;
         }
     }
