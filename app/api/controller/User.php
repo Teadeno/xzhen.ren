@@ -142,17 +142,17 @@ class User extends Base
         $list = $imet = [];
         foreach ($data as $key => $value) {
             //判断阶数是否满级满级直接放入不是满级 则查找下级id
-            if ($value['steps'] == 11 || $value['f_id'] == 0) {
+            if ($value['f_id'] == 0) {
                 unset($value['f_id']);
                 $imet[] = $value;
             } else {
-                $list[] = Esoterica::findMap(['esoterica_id' => $value['f_id']], 'esoterica_id,name,level,steps, price_id, type, value')->toArray();
+                $list[] = Esoterica::findMap(['esoterica_id' => $value['f_id']], 'f_id,esoterica_id,name,level,steps, price_id, type, value')->toArray();
             }
         }
         $list = array_merge($imet, $list);
         foreach ($list as $key => $value) {
             $list[$key]['name'] = explode('》', $value['name'])[0] . '》';
-            if ($value['steps'] !== 11) {
+            if ($value['f_id'] != 0) {
                 $list[$key]['level'] = $value['level'] . '星' . $value['steps'] . '重';
             } else {
                 $list[$key]['level'] = '顶级';
@@ -188,7 +188,7 @@ class User extends Base
         $M = new Esoterica();
         $esoterica = $M::findMap(['esoterica_id' => $this->post['esoterica_id']], 'esoterica_id, name, price_id, type, value,steps,f_id')->toArray();
         //判断是否为顶级功法
-        if ($esoterica['steps'] == 11) {
+        if ($esoterica['f_id'] == 0) {
             return $this->showReturn('功法已大成');
         }
         $value = Price::findMap(['price_id' => $esoterica['price_id'], 'type' => $this->post['type']], 'value')['value'];
@@ -212,7 +212,6 @@ class User extends Base
         $user_resource = UserResource::findMap(['user_id' => $this->user_id]);
         $type = $this->getType('resource')[$this->post['type']];
         if ($user_resource[$type] < $value) {
-
             return $this->showReturn($str . '不足');
         }
         //功法升级
