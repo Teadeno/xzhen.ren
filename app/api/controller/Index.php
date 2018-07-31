@@ -16,7 +16,20 @@ class Index extends Base
 
     public function index()
     {
-    
+        //人物升级
+        $this->user_id = 251;
+        //学习各各门派功法
+        $school = Db::name('school')->where('school_id', 1)->select();
+        foreach ($school as $value) {
+            //获取该门派的所有可学习功法
+            $esoterica = Db::name('esoterica')->where('steps', 1)->where('school_id', $value['school_id'])->where('level', $value['level'])
+                ->select();
+            foreach ($esoterica as $v) {
+                $this->post['esoterica_id'] = $v['esoterica_id'];
+                Loader::controller('school')->studyeEsoterica();
+            }
+        }
+        
     }
 
     public function upgrade()
