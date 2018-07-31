@@ -10,7 +10,7 @@ namespace app\base\controller;
 
 
 use think\Controller;
-
+use think\Log;
 abstract class Base extends Controller
 {
 
@@ -62,7 +62,7 @@ abstract class Base extends Controller
         } else if (isset(ReturnCode::$return_code[$errnoe])) {
             $return_data['message']['body']['errmsg'] = ReturnCode::$return_code[$errnoe];
         }
-
+        Log::record('[ PARAM ] ' . var_export(json_encode($return_data), true), 'return');
         return json_encode($return_data);
     }
 
