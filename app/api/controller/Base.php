@@ -44,8 +44,8 @@ class Base extends \app\base\controller\Base
      */
     public static function getTime($time, $create_time): int
     {
-        $t = floor(($time - strtotime($create_time)) / 86400);
-        return empty((int)$t * 100) ? 1 : (int)$t * 100;
+        $t = floor(($time - strtotime($create_time)) / 1080);
+        return empty((int)$t * 100) ? 1 : (int)$t;
     }
 
     /**

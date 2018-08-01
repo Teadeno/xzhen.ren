@@ -462,7 +462,7 @@ class School extends Base
         }
         $start_time = date('Y-m-d 00:00:00', time());
         $ent_time = date('Y-m-d 24:00:00', time());
-        $count = Db::name('goods_buy_log')->where($map)->where('create_time', '>=', $start_time)->where('create_time', '<=', $ent_time)->count();
+        $count = Db::name('goods_buy_log')->where($where)->where('create_time', '>=', $start_time)->where('create_time', '<=', $ent_time)->count();
         if ($goods['limit'] <= $count) {
             return $this->showReturn('今日已达上限');
         }

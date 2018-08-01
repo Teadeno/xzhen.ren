@@ -28,6 +28,7 @@ class User extends Base
      */
     public function top()
     {
+    
         //游戏头部信息  玩家昵称，性别，声望值，灵石 ，任务，任务同步时间
         //门派任务是否存在 同步更新位置   获取上次任务同步的时间是够超过10分钟  未超过不处理   超过查询任务奖励同步更新 调用任务同步行为
         $map = ['user_id' => $this->user_id];
@@ -368,9 +369,10 @@ class User extends Base
         $user_resource = UserResource::findMap($map, 'grow_award, month_num, vip,rmb')->toArray();
 
         $growth = empty($user_resource['grow_award']) ? 0 : 1;
-        $month_num = empty($user_resource['month_num']) ? 0 : $this->getMonthNum($user_resource['month_num']);
+        $month_num = empty($user_resource['month_num']) ? 0 : $this->getMonthNum($user_resource['month_num']) > 0 ? 1 : 0;
         $vip = empty($user_resource['vip']) ? 0 : 1;
         $rmb = empty($user_resource['rmb']) ? 0 : 1;
+    
         $list = [
             'growth' => $growth,
             'month_num' => $month_num,
@@ -422,7 +424,7 @@ class User extends Base
      */
     public function monthVip()
     {
-        //判断玩家是否购买成长基金
+        //判断玩家是否购买月卡
         $map = ['user_id' => $this->user_id];
         $user_esource = UserResource::findMap($map, 'month_num');
         $month_num = $user_esource->month_num;
@@ -463,7 +465,7 @@ class User extends Base
      */
     public function everVip()
     {
-        //判断玩家是否购买成长基金
+        //判断玩家是否购买终身卡
         $map = ['user_id' => $this->user_id];
         $user_esource = UserResource::findMap($map, 'vip');
         $vip = $user_esource->vip;
@@ -488,7 +490,7 @@ class User extends Base
 
         $day_award_log = [
             'user_id' => $this->user_id,
-            'type' => 1,
+            'type' => 2,
             'time' => time(),
         ];
         if (!DayAwardLog::create($day_award_log)) {
