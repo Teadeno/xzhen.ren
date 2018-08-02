@@ -13,7 +13,7 @@ class Base extends \app\base\model\Base
      * @param int $time
      * @return int
      */
-    public static function getTime($time, $create_time): int
+    public static function getTime($time, $create_time)
     {
         return \app\api\controller\Base::getTime($time, $create_time);
     }

@@ -13,7 +13,7 @@ class UserLog extends Base
     public function setTimeAttr($value, $data)
     {
         $create_time = User::findMap(['user_id' => $data['user_id']], 'create_time')->toArray()['create_time'];
-        return static::getTime(time(), $create_time) . '年';
+        return static::getTime(time(), $create_time);
     }
 
     protected function getUsernameAttr($value, $data)

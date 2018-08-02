@@ -16,19 +16,27 @@ class Base extends \app\base\controller\Base
     protected $user;
     protected $user_id;
     protected $device;
-
+    
     public function __construct()
     {
         parent::__construct();
         //解析请求数据
-
+        $this->init();
+    }
+    
+    private function init()
+    {
         if ($this->request->isPost()) {
             header("Access-Control-Allow-Origin: *"); // 允许任意域名发起的跨域请求
             header('Access-Control-Allow-Headers: X-Requested-With,X_Requested_With');
             $post = $this->getRequestPost($this->request->post('data'));
             $this->device = $post['header']['imei'];
-
+    
             $this->user = Loader::model('user')->findMap(['device' => $post['header']['imei']]);
+            if (empty($this->user) == true) {
+                echo $this->showReturnWithCode(1002, '账号不存在');
+                die;
+            }
             $this->user_id = $this->user ? $this->user->user_id : null;
             $this->post = $post['element'];
         } else {
@@ -42,10 +50,11 @@ class Base extends \app\base\controller\Base
      * @param int $time
      * @return int
      */
-    public static function getTime($time, $create_time): int
+    public static function getTime($time, $create_time)
     {
         $t = floor(($time - strtotime($create_time)) / 1080);
-        return empty((int)$t * 100) ? 1 : (int)$t;
+        $t = empty((int)$t * 100) ? 1 : (int)$t;
+        return $t . '年';
     }
 
     /**

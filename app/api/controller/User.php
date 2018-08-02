@@ -509,4 +509,5 @@ class User extends Base
         $award = $M->getAwardList($award_id);
         return $this->showReturnCode(0, $award);
     }
+    
 }
