@@ -142,12 +142,7 @@ class Dynasty extends Base
         }
         //判断用户资源是否足够
         $map = ['user_id' => $this->user_id];
-
-        $user_resource = UserResource::findMap($map);
-        if ($user_resource->lingshi < $price) return $this->showReturn('灵石不足');
-
         $type = $this->post['type'];
-
         $user_attribute = UserAttribute::findMap($map)->toArray();
         $M = new Tactical();
         $flog = true;
@@ -156,7 +151,8 @@ class Dynasty extends Base
             $flog = false;
         } else {
             $level = $M->findId($user_attribute['tactical'])->toArray()['level'];
-
+            $user_resource = UserResource::findMap($map);
+            if ($user_resource->lingshi < $price) return $this->showReturn('灵石不足');
         }
         if (!$M->tacticalLoading($this->user_id, $type, $level)) return $this->showReturn('网络错误');
         //减少资源
