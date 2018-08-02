@@ -59,6 +59,7 @@ class Shop extends Base
         //增加
         if (empty($data)) {
             //为空创建商品
+            ShopHj::destroy(['user_id' => $this->user_id]);
             Loader::model('shophj')->addGoods($this->user_id, $this->post['level']);
             $data = ShopHj::getListByMap($where, $field, 'type');
         }
