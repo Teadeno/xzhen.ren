@@ -156,7 +156,8 @@ class User extends Base
             } else {
                 $list[$key]['level'] = '顶级';
             }
-            $list[$key]['price_value'] = Price::findMap(['price_id' => $value['price_id'], 'type' => $this->post['price_type']], 'value')['value'];
+            $list[$key]['price_value'] = Price::findMap(['price_id' => $value['price_id'], 'type' => $this->post['price_type']], 'value')['value'] ?? 0;
+            
             unset($value['steps']);
             unset($list[$key]['price_id']);
         }
