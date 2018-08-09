@@ -101,27 +101,30 @@ class Login extends \app\base\controller\Base
 
         $res = get($url);//通过code获取openid
         $userinfo = json_decode($res, true);
+        if (!isset($userinfo['openid']) || empty($userinfo['openid'])) return $this->showReturnCode(0, ['status' => $res]);
         $openid = $userinfo['openid'];
-        //获取失败
-        if (!isset($userinfo['openid']) || empty($openid)) return $this->showReturnCode(0, ['status' => $res]);
-    
+        //获$userinfo['openid']
         //保存用户usionid信息
         $access_token = $userinfo['access_token'];
         $url = "https://api.weixin.qq.com/sns/userinfo?access_token=$access_token&openid=$openid";
         $res = get($url);//获取用户个人信息（UnionID机制）
         $unionID = json_decode($res, true);
-        $data = [
-            'openid' => $unionID['openid'],
-            'nickname' => $unionID['nickname'],
-            'sex' => $unionID['sex'],
-            'province' => $unionID['province'],
-            'city' => $unionID['city'],
-            'country' => $unionID['country'],
-            'headimgurl' => $unionID['headimgurl'],
-            'privilege' => $unionID['privilege'],
-            'unionid' => $unionID['unionid'],
-        ];
-        Db::name('wx_userinfo')->insert($data);
+        if (!Db::name('wx_userinfo')->where('openid', $unionID['openid'])->find()) {
+            $data = [
+                'openid' => $unionID['openid'],
+                'nickname' => $unionID['nickname'],
+                'sex' => $unionID['sex'],
+                'province' => $unionID['province'],
+                'city' => $unionID['city'],
+                'country' => $unionID['country'],
+                'headimgurl' => $unionID['headimgurl'],
+                'privilege' => $unionID['privilege'],
+                'unionid' => $unionID['unionid'],
+            ];
+        
+            Db::name('wx_userinfo')->insert($data);
+        }
+       
         
         
         //判断用户是否注册

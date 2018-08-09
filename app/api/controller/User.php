@@ -4,6 +4,7 @@ namespace app\api\controller;
 
 use app\api\model\DayAward;
 use app\api\model\DayAwardLog;
+use app\api\model\Elixir;
 use app\api\model\Equipment;
 use app\api\model\Esoterica;
 use app\api\model\Price;
@@ -317,12 +318,20 @@ class User extends Base
      */
     public function elixirList()
     {
-        $this->post['level'] = 1;
+    
         if (!isset($this->post['level'])) {
             return $this->showReturnWithCode(1001);
         }
-        $data = UserElixirLog::getListByMap(['user_id' => $this->user_id, 'level' => $this->post['level']], 'level,type, num');
-
+        //获取该等级全部丹药
+        $data = Elixir::getListByMap(['level' => $this->post['level'], 'type' => ['neq', 10]], 'name, type, value', 'type');
+        foreach ($data as &$value) {
+            $map = [
+                'user_id' => $this->user_id,
+                'type' => $value['type'],
+                'level' => $this->post['level'],
+            ];
+            $value['num'] = UserElixirLog::findMap($map, 'num')->num ?? 0;
+        }
         return $this->showReturnCode(0, $data);
     }
 

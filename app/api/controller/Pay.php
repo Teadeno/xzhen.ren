@@ -19,8 +19,8 @@ class Pay extends Base
     {
 
         $param = $this->post;
-        $param['pay_type'] = 2;
-
+    
+    
         $id = $param['goods_id'];
         $goods = config('pay.goods');
 
@@ -30,6 +30,7 @@ class Pay extends Base
         if ($result === false) {
             return $this->showReturn('发生未知错误');
         } else {
+    
             return $this->showReturnCode(0, $result);
         }
     }
@@ -45,7 +46,7 @@ class Pay extends Base
         if (!isset($param['name']) || !$param['name']) {
             return false;
         }
-        if (!isset($param['price']) || !$param['price']) {
+        if (!isset($param['pay_total']) || !$param['pay_total']) {
             return false;
         }
         if (!isset($param['type']) || !$param['type']) {
@@ -72,7 +73,7 @@ class Pay extends Base
         $data['num'] = isset($param['num']) ? $param['num'] : 1;
         $data['pay_type'] = $param['pay_type'];
         $data['type'] = $param['type'];
-        $data['pay_total'] = $param['price'];
+        $data['pay_total'] = $param['pay_total'];
         $data['pay_status'] = 1;  //订单状态1未付款2已付款3已到账
         $data['create_ip'] = request()->ip();
         $data['time_start'] = date('Y-m-d H:i:s', time());
@@ -131,28 +132,102 @@ class Pay extends Base
             $out_trade_no = $data['order_sn'];
             $mchid = $conf['mchid']; // 商户号
             $appid = $conf['appId'];
-            $key = $conf['key'];
-
             $unifiedOrder = new \WxPayUnifiedOrder();
             $unifiedOrder->SetAppid($appid);
             $unifiedOrder->SetMch_id($mchid);//商户号
             $unifiedOrder->SetBody($subject);//商品或支付单简要描述
-            $unifiedOrder->SetKey($key);//商品或支付单简要描述
+
             $unifiedOrder->SetOut_trade_no($out_trade_no);
             $unifiedOrder->SetTotal_fee($total);
             $unifiedOrder->SetNotify_url($conf['notify_url']);
             $unifiedOrder->SetTrade_type("APP");
             $result = \WxPayApi::unifiedOrder($unifiedOrder);
+            $result['timestamp'] = time();
+//            $str = 'appid='.$result['appid'].'&noncestr='.$result['nonce_str'].'&package=Sign=WXPay&partnerid='.$mchid.'&prepayid='.$result['prepay_id'].'&timestamp='.$result['timestamp'];
+////重新生成签名
+//            $result['sign'] = strtoupper(md5($str.'&key='.\WxPayConfig::KEY));
+    
+            $value = [
+                'appid' => $result['appid'],
+                'noncestr' => $result['nonce_str'],
+                'partnerid' => $result['mch_id'],
+                'prepayid' => $result['prepay_id'],
+                'package' => "Sign=WXPay",
+                'timestamp' => $result['timestamp'],
+            ];
+            $result['sign'] = $this->MakeSign($value);
+    
             if (is_array($result)) {
                 return $result;
             } else {
                 return false;
             }
-        } elseif ($data['pay_type'] == 3) {
-
+        } else if ($data['pay_type'] == 3) {
+            vendor('wxpay.WxPayApi');
+    
+            $conf = config('pay.wxpay');
+            // 商品名称
+            $subject = $data['name'];
+            // 订单号，示例代码使用时间值作为唯一的订单ID号
+            $total = $data['pay_total'];
+            $out_trade_no = $data['order_sn'];
+            $mchid = $conf['mchid']; // 商户号
+            $appid = $conf['appId'];
+            $key = $conf['key'];
+//            $scene_info ='{"h5_info": {"type":"Android","app_name": "修真破苍穹","package_name": "com.yesgame.xzhen"}}';
+            $unifiedOrder = new \WxPayUnifiedOrder();
+            $unifiedOrder->SetAppid($appid);
+            $unifiedOrder->SetMch_id($mchid);//商户号
+            $unifiedOrder->SetBody($subject);//商品或支付单简要描述
+    
+            $unifiedOrder->SetOut_trade_no($out_trade_no);
+//            $unifiedOrder->SetProduct_id($scene_info);
+    
+    
+            $unifiedOrder->SetTotal_fee($total);
+            $unifiedOrder->SetNotify_url($conf['notify_url']);
+            $unifiedOrder->SetTrade_type("MWEB");
+            $result = \WxPayApi::unifiedOrder($unifiedOrder);
+    
+            $result['timestamp'] = 1533790140;
+    
+            if (is_array($result)) {
+                return $result;
+            } else {
+                return false;
+            }
         }
     }
-
+    
+    public function MakeSign($value)
+    {
+        //签名步骤一：按字典序排序参数
+        ksort($value);
+        $string = $this->ToUrlParams($value);
+        //签名步骤二：在string后加入KEY
+        $string = $string . "&key=" . \WxPayConfig::KEY;
+        //签名步骤三：MD5加密
+        $string = md5($string);
+        //签名步骤四：所有字符转为大写
+        $result = strtoupper($string);
+        return $result;
+    }
+    
+    /**
+     * 格式化参数格式化成url参数
+     */
+    public function ToUrlParams($values)
+    {
+        $buff = "";
+        foreach ($values as $k => $v) {
+            if ($k != "sign" && $v != "" && !is_array($v)) {
+                $buff .= $k . "=" . $v . "&";
+            }
+        }
+        
+        $buff = trim($buff, "&");
+        return $buff;
+    }
     /**
      * 支付宝回调
      */
