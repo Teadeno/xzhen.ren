@@ -2,6 +2,7 @@
 
 namespace app\api\controller;
 
+use think\Controller;
 use think\Db;
 use think\Loader;
 
@@ -11,13 +12,30 @@ use think\Loader;
  * Date: 2018/6/11
  * Time: 15:23
  */
-class Index extends Base
+class Index extends Controller
 {
-
+    
     public function index()
     {
-        //人物升级
-        $this->user_id = 251;
+        
+        $txt = "First line of textnSecond line of text";
+
+// Use wordwrap() if lines are longer than 70 characters
+        $txt = wordwrap($txt, 70);
+
+// Send email
+        $c = mail("teadeno@163.com", "My subject", $txt);
+        var_dump($c);
+        
+    }
+    
+    public function add()
+    {
+        $user_id = 251;
+        
+        $list = Db::name('user_attribute')->where('user_id', $user_id)->find();
+        $info = explode(',', $list['esoterica_id']);
+        echo count($info);
         //学习各各门派功法
         $school = Db::name('school')->where('school_id', 1)->select();
         foreach ($school as $value) {
@@ -30,8 +48,9 @@ class Index extends Base
             }
         }
         
+        
     }
-
+    
     public function upgrade()
     {
         $this->post = [
@@ -68,7 +87,7 @@ class Index extends Base
                 break;
         }
         $info = null;
-
+        
         return $this->showReturnCode(0, $data);
     }
 }

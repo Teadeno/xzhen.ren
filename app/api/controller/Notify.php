@@ -10,9 +10,33 @@ use app\api\model\WallMap;
 use think\Db;
 use think\Request;
 use think\Controller;
-
+use think\Loader;
 class Notify extends Controller
 {
+    /**
+     * 发送邮件
+     * @ param array $award
+     * @ return bool
+     */
+    public static function sendEmail($user, $award_id, $title, $content)
+    {
+        if (!is_array($user)) {
+            $user = explode(',', $user);
+        }
+        foreach ($user as $value) {
+            $data[] = [
+                'user_id' => $value,
+                'title' => $title,
+                'content' => $content,
+                'award_id' => $award_id,
+                'is_read' => 0,
+                'is_get' => 0,
+            ];
+        }
+        if (!Loader::model('Email')->saveAll($data)) return false;
+        return true;
+    }
+    
     /**
      * 成长基金
      */
@@ -29,7 +53,7 @@ class Notify extends Controller
         if (!$this->sendEmail($user, $award_id, $title, $content)) {
             $flog = false;
         }
-        if (!UserResource::editMapData(['user_id' => $user], ['grow_award' => 1])) {
+        if (!UserResource::editMapData(['user_id' => $user], ['grow_award' => 12])) {
             $flog = false;
         }
         
@@ -139,16 +163,17 @@ class Notify extends Controller
      */
     public function wx_notify()
     {
-        $xml = $GLOBALS['HTTP_RAW_POST_DATA'];
-        file_put_contents('wxpay.txt', $xml);
-        vendor('wxpay.WxPay.Api');
+    
+        $xml = file_get_contents('php://input');
+        vendor('wxpay.WxPayApi');
         $data = \WxPayResults::Init($xml);
+//        file_put_contents('wxpay.txt', json_encode($data));
         $wxPayData = new \WxPayDataBase();
         if (!$data) {
             $return = ['return_code' => 'FAIL', 'return_msg' => '数据错误'];
             return \WxPayApi::replyNotify($wxPayData->ToXml($return));
         }
-        
+    
         if (!array_key_exists("transaction_id", $data)) {
             $return = ['return_code' => 'FAIL', 'return_msg' => '输入参数不正确'];
             return \WxPayApi::replyNotify($wxPayData->ToXml($return));
@@ -159,7 +184,7 @@ class Notify extends Controller
             $return = ['return_code' => 'FAIL', 'return_msg' => '订单查询失败'];
             return \WxPayApi::replyNotify($wxPayData->ToXml($return));
         }
-        
+    
         $order_sn = $data['out_trade_no'];
         $order = Db::name('order')->where('order_sn', $order_sn)->find();
         if (!$order) {
@@ -169,7 +194,7 @@ class Notify extends Controller
         if ($order['pay_status'] == 2) {
             return 'success';
         }
-        
+    
         $param = [];
         $param['pay_status'] = 2;
         $param['transaction_id'] = $data['transaction_id'];
@@ -179,15 +204,33 @@ class Notify extends Controller
         $result = $this->upOrder($param, $order_sn, $order);  // 更新
         if ($result == true) {
             $return = ['return_code' => 'SUCCESS', 'return_msg' => 'OK'];
-            return \WxPayApi::replyNotify($wxPayData->ToXml($return));
+            return \WxPayApi::replyNotify($this->ToXml($return));
         }
         $return = ['return_code' => 'FAIL', 'return_msg' => 'error'];
-        return \WxPayApi::replyNotify($wxPayData->ToXml($return));
+        return \WxPayApi::replyNotify($this->ToXml($return));
     }
     
+    public function ToXml($return)
+    {
+        if (!is_array($return)
+            || count($return) <= 0) {
+            throw new WxPayException("数组数据异常！");
+        }
+        
+        $xml = "<xml>";
+        foreach ($return as $key => $val) {
+            if (is_numeric($val)) {
+                $xml .= "<" . $key . ">" . $val . "</" . $key . ">";
+            } else {
+                $xml .= "<" . $key . "><![CDATA[" . $val . "]]></" . $key . ">";
+            }
+        }
+        $xml .= "</xml>";
+        return $xml;
+    }
     private function queryOrder($transaction_id)
     {
-        vendor('wxpay.WxPay.Api');
+        vendor('wxpay.WxPayApi');
         $checkOrder = new \WxPayOrderQuery();
         $checkOrder->SetTransaction_id($transaction_id);
         $result = \WxPayApi::orderQuery($checkOrder);
@@ -200,6 +243,42 @@ class Notify extends Controller
         return false;
     }
     
+    /**
+     * 支付宝回调
+     */
+    public function ail_notify(Request $request)
+    {
+        $data = $request->post();
+        $conf = config('pay.alipay');
+        vendor('alipay.aop.AopClient');
+        $aop = new \AopClient;
+        $aop->alipayrsaPublicKey = $conf['alipayrsaPublicKey'];
+        $signType = $conf['signType'];
+        //验证签名
+        $flag = $aop->rsaCheckV1($_POST, NULL, $signType);
+        if ($flag) {
+            $order_sn = $data['out_trade_no'];
+            $order = Db::name('order')->where('order_sn', $order_sn)->find();
+            if (!$order) {
+                return 'order is not find';
+            }
+            if ($order['pay_state'] == 2) {
+                return 'success';
+            }
+            
+            $param = [];
+            $param['pay_status'] = 2;
+            $param['transaction_id'] = $data['trade_no'];
+            $param['receipt_amount'] = $data['total_amount'];
+            $param['buyer_id'] = isset($data['buyer_id']) ? $data['buyer_id'] : '';
+            $param['time_end'] = isset($data['gmt_payment']) ? $data['gmt_payment'] : '';
+            $result = $this->upOrder($param, $order_sn, $order);  // 更新
+            if ($result == true) {
+                return 'success';
+            }
+        }
+        return 'error';
+    }
     private function upOrder($param = [], $order_sn = '', $order = '')
     {
         Db::startTrans();

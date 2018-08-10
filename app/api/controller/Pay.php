@@ -120,7 +120,8 @@ class Pay extends Base
 //        $responseArray = [];
 //         parse_str($response,$responseArray);
             // 注意：这里不需要使用htmlspecialchars进行转义，直接返回即可
-            return $response;
+            echo $response;
+            die;
         } elseif ($data['pay_type'] == 2) { //微信
             vendor('wxpay.WxPayApi');
 

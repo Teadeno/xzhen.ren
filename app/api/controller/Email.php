@@ -63,7 +63,7 @@ class Email extends Base
         if ($email['is_get'] === 1) return $this->showReturn('已领取');
 
         //获取奖励
-        if (empty($email['award_id'])) {
+        if (!empty($email['award_id'])) {
             $data = $M->getAwardList($email['award_id'], true);
             //领取奖励
             if (!$M->getAward($data, $this->user_id)) return $this->showReturn('领取失败');

@@ -257,16 +257,20 @@ class Base extends \app\base\model\Base
                 if (Loader::model('user_knapsack')->isUpdate(false)->allowField(true)->insertAll($knapsack_insert) == 0) {
                     return false;
                 }
+            } else {
+                $insert = array_merge($insert, $knapsack_insert);
             }
-            $insert = $knapsack_insert;
+    
         }
         if (isset($knapsack_update)) {
             if ($update === false) {
                 if (Loader::model('user_knapsack')->isUpdate(true)->allowField(true)->save($knapsack_update, ['knapsack_id' => $result['knapsack_id'],]) == 0) {
                     return false;
                 }
+            } else {
+                $update[] = $knapsack_update;
             }
-            $update[] = $knapsack_update;
+           
         }
         return true;
     }

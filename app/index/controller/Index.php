@@ -36,6 +36,7 @@ class Index extends Controller
             'time' => 1,
             'user_log' => $user_log
         ];
+        var_dump($list);
 //
 //        $n = file_get_contents('run.log');
 //        $n++;
