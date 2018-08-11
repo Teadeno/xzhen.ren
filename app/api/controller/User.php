@@ -151,7 +151,6 @@ class User extends Base
         }
         $list = array_merge($imet, $list);
         foreach ($list as $key => $value) {
-            $list[$key]['name'] = explode('》', $value['name'])[0] . '》';
             if ($value['f_id'] != 0) {
                 $list[$key]['level'] = $value['level'] . '星' . $value['steps'] . '重';
             } else {
@@ -252,7 +251,7 @@ class User extends Base
             return $this->showReturnWithCode(1001);
         }
         if ($this->post['knapsack_id'] == 0 || $this->post['num'] == 0) {
-            return $this->showReturn('数量不足');
+            return $this->showReturn('数量不正确');
         }
         $knapsack_goods = UserKnapsack::findMap(['knapsack_id' => $this->post['knapsack_id']]);
         Db::startTrans();

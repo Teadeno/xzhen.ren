@@ -177,6 +177,14 @@ class Esoterica extends Base
         }
     }
     /**
+     *功法名称修改器
+     * */
+    public function getNameAttr($value){
+       return explode('》', $value)[0] . '》';
+    }
+   
+    
+    /**
      *图片路径增加域名
      * */
     public function getImgUrlAttr($value)

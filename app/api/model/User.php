@@ -38,7 +38,7 @@ class User extends Base
                 'username' => $post['username'],
                 'sex' => $post['sex'],
                 'device' => $post['device'],
-                'source' => 1, // 写死先
+                'source' =>  $post['source'], // 写死先
                 'version' => $post['version'],
             ];
             //微信注册
@@ -131,7 +131,7 @@ class User extends Base
     {
         switch ($value) {
             case 1:
-                return 'Android';
+                return 'IOS';
                 break;
             case 2:
                 return 'IOS';

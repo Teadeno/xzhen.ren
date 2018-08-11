@@ -11,6 +11,7 @@ use app\api\model\UserResource;
 use app\api\controller\Base as B;
 use app\base\model\Base;
 use think\Hook;
+use think\Log;
 
 class Sync
 {
@@ -127,9 +128,11 @@ class Sync
         $dynasty_update['grass'] = $params['grass'] + $params['s_grass'] * $num;
         $dynasty_update['wood'] = $params['wood'] + $params['s_wood'] * $num;
         $dynasty_update['food'] = $params['food'] + $params['s_food'] * $num;
+    
+        Log::record('[ dynasty_update ] ' . var_export($dynasty_update, true), 'dynasty_update');
         foreach ($dynasty_update as $key => $value) {
             $type = 'max_' . $key;
-            $dynasty_update[$key] = $value > $params[$type] ? $params[$key] : $value;
+            $dynasty_update[$key] = $value > $params[$type] ? $params[$key] > $params[$type] ? $params[$key]: $params[$type] : $value;
         }
         $dynasty_update['sync_time'] = $time;
 

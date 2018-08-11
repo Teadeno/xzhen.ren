@@ -93,7 +93,8 @@ class Dynasty extends Base
         //玩家现有资源 同步
         $map = ['user_id' => $this->user_id];
         Hook::listen('sync_dynasty', $map);
-        $user_dynasty = UserDynasty::findMap($map);
+        
+        $user_dynasty = UserDynasty::findMap(['user_id' => $this->user_id]);
         if ($user_dynasty->wood < $f_info->price) return $this->showReturn('木材不足');
 
         //更新
@@ -200,14 +201,15 @@ class Dynasty extends Base
         if (!isset($this->post['tactical_id'])) {
             return $this->showReturnWithCode(1001);
         }
-        Hook::listen('sync_dynasty', $map);
+       
         $map = ['user_id' => $this->user_id];
+        Hook::listen('sync_dynasty', $map);
         //1、获取前端阵法ID   判断使用资源是否够学习
         $M = new Tactical();
 
         $info = $M->findId($this->post['tactical_id'])->toArray();
         $price = Consumption::getListByMap(['consumption_id' => ['in', $info['consumption_id']]], 'type, value');
-        $user_dynasty = UserDynasty::findMap($map);
+        $user_dynasty = UserDynasty::findMap(['user_id' => $this->user_id]);
 
         foreach ($price as $value) {
             $type = $this->getType('consumption')[$value['type']];

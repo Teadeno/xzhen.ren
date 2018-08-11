@@ -30,8 +30,8 @@ class Shop extends Base
         }
         //判断是否能够开启本层
         $user_resource = UserResource::findMap(['user_id' => $this->user_id]);
-
-        if ($user_resource->rmb < 50 * ($this->post['level'] - 1)) {
+        $limit_rmb = 50 * ($this->post['level'] -1);
+        if ($user_resource->rmb < $limit_rmb) {
             return $this->showReturn('开启条件不足');
         }
         if (isset($this->post['status'])) {
@@ -67,7 +67,7 @@ class Shop extends Base
 
         $list = [];
         $list['top_lingshi'] = $user_resource->top_lingshi;
-        $list['tier_num'] = floor($user_resource->rmb / 50) >= 10 ? 10 : floor($user_resource->rmb / 50);
+        $list['tier_num'] = floor($user_resource->rmb / 50)+1 >= 10 ? 10 : floor($user_resource->rmb / 50)+1;
         foreach ($data as $value) {
             switch ($value['type']) {
                 case 1:

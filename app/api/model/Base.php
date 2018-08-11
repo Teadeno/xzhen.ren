@@ -235,9 +235,7 @@ class Base extends \app\base\model\Base
                     'num' => $data['num'] + $result['num']
                 ];
             } else {
-                if ($data['type'] == 3) {
-                    $data['name'] = explode('》', $data['name'])[0] . '》';
-                }
+               
                 $knapsack_insert[] = [
                     'user_id' => $data['user_id'],
                     'name' => $data['name'],

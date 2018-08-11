@@ -9,7 +9,6 @@ use app\api\model\UserEquipment;
 use app\api\model\UserResource;
 use app\base\controller\ContentTpl;
 use think\Loader;
-
 class Base extends \app\base\controller\Base
 {
     protected $post;
@@ -52,7 +51,7 @@ class Base extends \app\base\controller\Base
      */
     public static function getTime($time, $create_time)
     {
-        $t = floor(($time - strtotime($create_time)) / 1080);
+        $t = floor(($time - strtotime($create_time)) / 432);
         $t = empty((int)$t * 100) ? 1 : (int)$t;
         return $t . '年';
     }

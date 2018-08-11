@@ -37,7 +37,7 @@ class ShopHj extends Base
                 $data[] =
                     [
                         'user_id' => $user_id,
-                        'name' => explode('》', $value['name'])[0] . '》',
+                        'name' => $value['name'],
                         'type' => array_search('esoterica', $this->getType('knapsack_type')),
                         'goods_id' => $value['esoterica_id'],
                         'level' => $level,
