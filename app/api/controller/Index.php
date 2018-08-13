@@ -17,6 +17,8 @@ class Index extends \app\base\controller\Base
     
     public function upgrade()
     {
+        header("Access-Control-Allow-Origin: *"); // 允许任意域名发起的跨域请求
+        header('Access-Control-Allow-Headers: X-Requested-With,X_Requested_With');
         $post = $this->getRequestPost($this->request->post('data'));
         
         $info = Db::name('upgrade')->order('create_time desc')->find();

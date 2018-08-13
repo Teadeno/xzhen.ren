@@ -4,7 +4,7 @@ namespace app\api\controller;
 
 use app\api\model\User;
 use think\Db;
-
+use Sdk_AnySDK;
 class Login extends \app\base\controller\Base
 {
     private $post; //post解析后数据
@@ -199,6 +199,48 @@ class Login extends \app\base\controller\Base
         $list['status'] = $user::findMap($map) ? 1 : 0;
 
         return $this->showReturnCode(0, $list);
+    }
+    
+    /**
+     * 百度登陆验证  暂未启用
+     */
+    public function bdLogin()
+    {
+        
+        header("Content-type: application/json; charset=utf-8");
+        defined('LOGIN_CHECK_URL')        or define('LOGIN_CHECK_URL',          'http://oauth.anysdk.com/api/User/LoginOauth/');
+        defined('ADTRACKING_REPORT_URL')  or define('ADTRACKING_REPORT_URL',    'http://pay.anysdk.com/v5/AdTracking/Submit/');
+        defined('DEBUG_MODE')             or define('DEBUG_MODE',               FALSE);
+
+        // 游戏ID              前往dev.anysdk.com => 游戏列表 获取
+        defined('ANYSDK_GAME_ID')         or define('ANYSDK_GAME_ID', 639797331);
+        // 增强密钥             前往dev.anysdk.com => 游戏列表 获取，此参数请严格保密
+        defined('ANYSDK_ENHANCED_KEY')    or define('ANYSDK_ENHANCED_KEY','ODNjNmY3ZWEyMWY1MWY3ZGZhNTA');
+        // private_key        前往dev.anysdk.com => 游戏列表 获取
+        defined('ANYSDK_PRIVATE_KEY')     or define('ANYSDK_PRIVATE_KEY','58D00BD80CF7AB095318C357D140300A');
+        file_put_contents('cocos.log','进入\r\n'.date('Y-m-d H:i:s', time()),FILE_APPEND);
+        $login_params = $_REQUEST;
+        $anysdk = new \Sdk_AnySDK();
+        $response = $anysdk->loginForward($login_params);
+    
+        if ($anysdk->getLoginStatus()) {
+         
+            // 获取登录结果的一些字段
+            $channel = $anysdk->getLoginChannel();
+            $uid = $anysdk->getLoginUid();
+            $user_sdk = $anysdk->getLoginUserSdk();
+            $plugin_id = $anysdk->getLoginPluginId();
+            $server_id = $anysdk->getLoginServerId();
+            $data = $anysdk->getLoginData();   // 获取登录验证渠道返回的原始内容
+            // 获取登录结果字段值示例结束
+        
+        }
+    
+        $resp_arr = json_decode($response, TRUE);
+        $resp_arr['ext'] = '';
+        $response = json_encode($resp_arr);
+        
+        echo is_scalar($response)? $response: json_encode($response);
     }
 
 }

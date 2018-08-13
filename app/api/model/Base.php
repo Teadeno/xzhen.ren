@@ -149,7 +149,8 @@ class Base extends \app\base\model\Base
                             'img_url' => $value['img_url'],
                             'describe' => $value['describe']
                         ];
-                        if (!self::addKnapsack($data, $knapsack_insert, $knapsack_update)) return false;
+                        if (!self::addKnapsack($data, $knapsack_insert, $knapsack_update))
+                            return false;
                         break;
                     default:   // 资源道具
                         //资源领取存入用户资源

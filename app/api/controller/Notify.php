@@ -58,9 +58,9 @@ class Notify extends Controller
         }
         
         if ($flog) {
-            $str = "用户" . $user_id . '成长基金奖励已发放成功' . date('Y-m-d H:i:s') . '<br/>';
+            $str = "用户" . $user_id . '成长基金奖励已发放成功' . date('Y-m-d H:i:s') . "\\r\\n";
         } else {
-            $str = "用户" . $user_id . '成长基金奖励已发放失败' . date('Y-m-d H:i:s') . '<br/>';
+            $str = "用户" . $user_id . '成长基金奖励已发放失败' . date('Y-m-d H:i:s') . "\\r\\n";
         }
         file_put_contents('Activity.log', $str, FILE_APPEND);
         return $flog;
@@ -90,9 +90,9 @@ class Notify extends Controller
             $wall->save();
         }
         if ($flog) {
-            $str = "用户" . $user_id . '月卡奖励已发放成功' . date('Y-m-d H:i:s') . '<br/>';
+            $str = "用户" . $user_id . '月卡奖励已发放成功' . date('Y-m-d H:i:s') . "\\r\\n";
         } else {
-            $str = "用户" . $user_id . '月卡奖励已发放失败' . date('Y-m-d H:i:s') . '<br/>';
+            $str = "用户" . $user_id . '月卡奖励已发放失败' . date('Y-m-d H:i:s') . "\\r\\n";
         }
         file_put_contents('Activity.log', $str, FILE_APPEND);
         return $flog;
@@ -121,9 +121,9 @@ class Notify extends Controller
         }
         
         if ($flog) {
-            $str = "用户" . $user_id . '终身卡奖励已发放成功' . date('Y-m-d H:i:s') . '<br/>';
+            $str = "用户" . $user_id . '终身卡奖励已发放成功' . date('Y-m-d H:i:s') . "\\r\\n";
         } else {
-            $str = "用户" . $user_id . '终身卡奖励已发放失败' . date('Y-m-d H:i:s') . '<br/>';
+            $str = "用户" . $user_id . '终身卡奖励已发放失败' . date('Y-m-d H:i:s') ."\\r\\n";
         }
         file_put_contents('Activity.log', $str, FILE_APPEND);
         return $flog;
@@ -150,9 +150,9 @@ class Notify extends Controller
 //        }
         
         if ($flog) {
-            $str = "用户" . $user_id . '首次充值奖励已发放成功' . date('Y-m-d H:i:s') . '<br/>';
+            $str = "用户" . $user_id . '首次充值奖励已发放成功' . date('Y-m-d H:i:s') . "\\r\\n";
         } else {
-            $str = "用户" . $user_id . '首次充值奖励已发放失败' . date('Y-m-d H:i:s') . '<br/>';
+            $str = "用户" . $user_id . '首次充值奖励已发放失败' . date('Y-m-d H:i:s') . "\\r\\n";
         }
         file_put_contents('Activity.log', $str, FILE_APPEND);
         return $flog;
@@ -167,7 +167,6 @@ class Notify extends Controller
         $xml = file_get_contents('php://input');
         vendor('wxpay.WxPayApi');
         $data = \WxPayResults::Init($xml);
-//        file_put_contents('wxpay.txt', json_encode($data));
         $wxPayData = new \WxPayDataBase();
         if (!$data) {
             $return = ['return_code' => 'FAIL', 'return_msg' => '数据错误'];
@@ -278,6 +277,80 @@ class Notify extends Controller
             }
         }
         return 'error';
+    }
+    
+    /**
+     * 百度回调  暂未启用
+     */
+    public function baidu_notify()
+    {
+        defined('LOGIN_CHECK_URL')        or define('LOGIN_CHECK_URL',          'http://oauth.anysdk.com/api/User/LoginOauth/');
+        defined('ADTRACKING_REPORT_URL')  or define('ADTRACKING_REPORT_URL',    'http://pay.anysdk.com/v5/AdTracking/Submit/');
+        defined('DEBUG_MODE')             or define('DEBUG_MODE',               FALSE);
+    
+        // 游戏ID              前往dev.anysdk.com => 游戏列表 获取
+        defined('ANYSDK_GAME_ID')         or define('ANYSDK_GAME_ID', 639797331);
+        // 增强密钥             前往dev.anysdk.com => 游戏列表 获取，此参数请严格保密
+        defined('ANYSDK_ENHANCED_KEY')    or define('ANYSDK_ENHANCED_KEY','ODNjNmY3ZWEyMWY1MWY3ZGZhNTA');
+        // private_key        前往dev.anysdk.com => 游戏列表 获取
+        defined('ANYSDK_PRIVATE_KEY')     or define('ANYSDK_PRIVATE_KEY','58D00BD80CF7AB095318C357D140300A');
+        /**
+         * 如果你想配合dev后台的“模拟通知游服”功能进行内网调试，请取消注释此响应头设置代码。
+         *
+        header("Access-Control-Allow-Origin: http://dev.anysdk.com");
+         */
+    
+        $payment_params = $_REQUEST;
+        $anysdk = new \Sdk_AnySDK(ANYSDK_ENHANCED_KEY, ANYSDK_PRIVATE_KEY);
+    
+        /**
+         * 设置调试模式
+         *
+         */
+        $anysdk->setDebugMode(\Sdk_AnySDK::DEBUG_MODE_ON);
+    
+        /**
+         * ip白名单检查
+         *
+        $anysdk->pushIpToWhiteList('127.0.0.1');
+        $anysdk->checkIpWhiteList() or die(Sdk_AnySDK::PAYMENT_RESPONSE_FAIL . 'ip');
+         */
+    
+        /**
+         * SDK默认只检查增强签名，如果要检查普通签名和增强签名，则需要此设置
+         *
+         */
+        $anysdk->setPaymentSignCheckMode(\Sdk_AnySDK::PAYMENT_SIGN_CHECK_MODE_BOTH);
+        $check_sign = $anysdk->checkPaymentSign($payment_params);
+        if (!$check_sign) {
+            echo $anysdk->getDebugInfo(), "\n=====我是分割线=====\n";
+            die(\Sdk_AnySDK::PAYMENT_RESPONSE_FAIL . 'sign_error');
+        }
+    
+        /**
+         * 检查订单状态，1为成功
+         */
+        if (intval($anysdk->getPaymentStatus()) !== \Sdk_AnySDK::PAYMENT_STATUS_SUCCESS) {
+            die(\Sdk_AnySDK::PAYMENT_RESPONSE_OK);
+        }
+    
+        /**
+         * 获取支付通知详细参数
+         *
+        $amount = $anysdk->getPaymentAmount();
+        $product_id = $anysdk->getPaymentProductId();
+        $product_name = $anysdk->getPaymentProductName();
+        $product_count = $anysdk->getPaymentProductCount();
+        $channel_product_id = $anysdk->getPaymentChannelProductId();
+        $user_id = $anysdk->getPaymentUserId();
+        $game_user_id = $anysdk->getPaymentGameUserId();
+        $order_id = $anysdk->getPaymentOrderId();
+        $channel_order_id = $anysdk->getPaymentChannelOrderId();
+        $private_data = $anysdk->getPaymentPrivateData();
+         */
+    
+        echo $anysdk->getDebugInfo(), "\n=====我是分割线=====\n";
+        echo \Sdk_AnySDK::PAYMENT_RESPONSE_OK;
     }
     private function upOrder($param = [], $order_sn = '', $order = '')
     {

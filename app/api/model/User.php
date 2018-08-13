@@ -102,13 +102,13 @@ class User extends Base
             $this->rollback();
             return false;
         }
-        //发送邮件
+   /*     //发送邮件
         $title = "新手攻略";
         $award_id = '';
         $content = $this->getUserLogContent('user', 0);
         if (!$this->sendEmail($user->user_id, $award_id, $title, $content)) {
             return false;
-        }
+        }*/
         $user_log = [
             'user_id' => $user->user_id,
             'type' => 6,

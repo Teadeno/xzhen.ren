@@ -21,7 +21,6 @@ use think\Db;
 use think\Hook;
 use think\Loader;
 
-
 class User extends Base
 {
     /**
