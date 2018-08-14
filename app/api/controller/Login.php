@@ -5,6 +5,7 @@ namespace app\api\controller;
 use app\api\model\User;
 use think\Db;
 use Sdk_AnySDK;
+use think\Log;
 class Login extends \app\base\controller\Base
 {
     private $post; //post解析后数据
@@ -218,11 +219,12 @@ class Login extends \app\base\controller\Base
         defined('ANYSDK_ENHANCED_KEY')    or define('ANYSDK_ENHANCED_KEY','ODNjNmY3ZWEyMWY1MWY3ZGZhNTA');
         // private_key        前往dev.anysdk.com => 游戏列表 获取
         defined('ANYSDK_PRIVATE_KEY')     or define('ANYSDK_PRIVATE_KEY','58D00BD80CF7AB095318C357D140300A');
-        file_put_contents('cocos.log','进入\r\n'.date('Y-m-d H:i:s', time()),FILE_APPEND);
         $login_params = $_REQUEST;
         $anysdk = new \Sdk_AnySDK();
-        $response = $anysdk->loginForward($login_params);
     
+        $response = $anysdk->loginForward($login_params);
+   
+        Log::record('[ PARAM0 ] ' . json_encode($response), 'return');
         if ($anysdk->getLoginStatus()) {
          
             // 获取登录结果的一些字段
@@ -231,16 +233,39 @@ class Login extends \app\base\controller\Base
             $user_sdk = $anysdk->getLoginUserSdk();
             $plugin_id = $anysdk->getLoginPluginId();
             $server_id = $anysdk->getLoginServerId();
-            $data = $anysdk->getLoginData();   // 获取登录验证渠道返回的原始内容
+            $userinfo = $anysdk->getLoginData();   // 获取登录验证渠道返回的原始内容
+            $arr = [
+                'channel'=>$channel,
+                'uid' =>$uid,
+                'user_sdk' =>$user_sdk,
+                'plugin_id' =>$plugin_id,
+                'server_id' =>$server_id,
+                'data' =>$userinfo,
+            ];
+     
+            Log::record('[ PARAM1 ] ' . var_export($arr, true), 'return');
             // 获取登录结果字段值示例结束
-        
         }
-    
+      
         $resp_arr = json_decode($response, TRUE);
-        $resp_arr['ext'] = '';
-        $response = json_encode($resp_arr);
+        $user = User::findMap(['open_id' => $userinfo['openid']]);
+        if (empty($user)) {
+            $list = [
+                'status' => 1,   //未注册
+                'open_id' => $userinfo['openid'],
+            ];
+        } else {
+            $list = [
+                'status' => 2,   //已注册
+                'device' => $user->device
+            ];
+        }
         
-        echo is_scalar($response)? $response: json_encode($response);
+        $resp_arr['ext'] = $this->getRequestPost($this->showReturnCode(0, $list));
+        $response = json_encode($resp_arr);
+ 
+        Log::record('[ PARAM2 ] ' . var_export($response, true), 'return');
+        return is_scalar($response)? $response: json_encode($response);
     }
 
 }

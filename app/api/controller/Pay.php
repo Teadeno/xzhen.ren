@@ -19,12 +19,10 @@ class Pay extends Base
     {
 
         $param = $this->post;
-    
-    
         $id = $param['goods_id'];
         $goods = config('pay.goods');
 
-        $data = array_merge($goods[$id], ['pay_type' => $param['pay_type']]);
+        $data = array_merge($goods[$id], ['pay_type' => $param['pay_type']], ['goods_id'=> $id]);
 
         $result = $this->pay($data);
         if ($result === false) {
@@ -66,6 +64,7 @@ class Pay extends Base
 
         $data = [];
         $data['order_sn'] = guid();
+        $data['goods_id'] = $param['goods_id'];
         $data['user_id'] = $this->user_id;
         $data['name'] = $param['name'];
         $data['username'] = $user->username;
@@ -164,39 +163,7 @@ class Pay extends Base
                 return false;
             }
         } else if ($data['pay_type'] == 3) {
-            vendor('wxpay.WxPayApi');
-    
-            $conf = config('pay.wxpay');
-            // 商品名称
-            $subject = $data['name'];
-            // 订单号，示例代码使用时间值作为唯一的订单ID号
-            $total = $data['pay_total'];
-            $out_trade_no = $data['order_sn'];
-            $mchid = $conf['mchid']; // 商户号
-            $appid = $conf['appId'];
-            $key = $conf['key'];
-//            $scene_info ='{"h5_info": {"type":"Android","app_name": "修真破苍穹","package_name": "com.yesgame.xzhen"}}';
-            $unifiedOrder = new \WxPayUnifiedOrder();
-            $unifiedOrder->SetAppid($appid);
-            $unifiedOrder->SetMch_id($mchid);//商户号
-            $unifiedOrder->SetBody($subject);//商品或支付单简要描述
-    
-            $unifiedOrder->SetOut_trade_no($out_trade_no);
-//            $unifiedOrder->SetProduct_id($scene_info);
-    
-    
-            $unifiedOrder->SetTotal_fee($total);
-            $unifiedOrder->SetNotify_url($conf['notify_url']);
-            $unifiedOrder->SetTrade_type("MWEB");
-            $result = \WxPayApi::unifiedOrder($unifiedOrder);
-    
-            $result['timestamp'] = 1533790140;
-    
-            if (is_array($result)) {
-                return $result;
-            } else {
-                return false;
-            }
+                return $data;
         }
     }
     
