@@ -114,7 +114,7 @@ class Checkpoint extends Base
         if (empty($this->post['checkpoin_id'])) {
             return $this->showReturnWithCode(1001);
         }
-        if ($this->post['checkpoin_id'] > 2) {
+        if ($this->post['checkpoin_id'] > 3) {
             return $this->showReturn('暂未开放');
         }
         $levle = \app\api\model\Checkpoint::findMap(['checkpoin_id' => $this->post['checkpoin_id']], 'level')->level;

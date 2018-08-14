@@ -11,7 +11,7 @@ namespace app\base\controller;
 
 use think\Controller;
 use think\Log;
-abstract class Base extends Controller
+class Base extends Controller
 {
 
     /**
@@ -45,13 +45,14 @@ abstract class Base extends Controller
      */
     public function showReturnCode($errnoe = '', $data = [], $errmsg = '')
     {
+        if ($errnoe === 100) $data = ['status' => 100];
         $return_data = [
             'message' => [
                 'version' => '1.0',
                 'body' => [
                     'errno' => 500,
                     'errmsg' => '未定义消息',
-                    'data' => $errnoe === 0 ? $data : [],
+                    'data' => $data,
                 ]
             ]
         ];
@@ -73,7 +74,7 @@ abstract class Base extends Controller
      */
     public function showReturn($errmsg = '参数错误')
     {
-        return $this->showReturnCode(0, ['status' => 100], $errmsg);
+        return $this->showReturnCode(100, ['status' => 100], $errmsg);
     }
 
 }

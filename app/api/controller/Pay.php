@@ -19,20 +19,48 @@ class Pay extends Base
     {
 
         $param = $this->post;
-    
-    
         $id = $param['goods_id'];
         $goods = config('pay.goods');
 
-        $data = array_merge($goods[$id], ['pay_type' => $param['pay_type']]);
-
-        $result = $this->pay($data);
+        $data = array_merge($goods[$id], ['pay_type' => $param['pay_type']], ['goods_id'=> $id]);
+        if ($param['pay_type'] == 100){
+            $result = $this->anySdkPay($data);
+        }elseif($param['pay_type'] == 1 || $param['pay_type'] == 2 ){
+            $result = $this->pay($data);
+        }
+      
         if ($result === false) {
             return $this->showReturn('发生未知错误');
         } else {
     
             return $this->showReturnCode(0, $result);
         }
+    }
+    /**
+     * anySdkPay支付
+     */
+    public function anySdkPay($param)
+    {
+        $user = \app\api\model\User::findMap(['user_id' => $this->user_id]);
+        $userResource = UserResource::findMap(['user_id' => $this->user_id]);
+        $data = [];
+        $data['Product_Id'] = $param['goods_id'];
+        $data['Product_Name'] = $param['name'];
+        $data['Product_Price'] = (string)($param['pay_total'] /100) ;
+        $data['Product_Count'] = "1";
+        $data['Product_Desc'] = $param['describe'];
+        $data['Coin_Name'] = "灵石";
+        $data['Coin_Rate'] = "100";
+        $data['Role_Id'] = (string) $this->user_id;
+        $data['Role_Name'] =  $user->username;
+        $data['Role_Grade'] = (string) $userResource->realm_id;
+        $data['Role_Balance'] = (string) $userResource->top_lingshi / 100;
+        $data['Role_Balance'] =  (string) $userResource->top_lingshi;
+        $data['Vip_Level'] = "1";
+        $data['Party_Name'] = "1";
+        $data['Server_Id'] = "1";
+        $data['Server_Name'] = "1";
+        return $data;
     }
 
     /**
@@ -66,6 +94,7 @@ class Pay extends Base
 
         $data = [];
         $data['order_sn'] = guid();
+        $data['goods_id'] = $param['goods_id'];
         $data['user_id'] = $this->user_id;
         $data['name'] = $param['name'];
         $data['username'] = $user->username;
@@ -157,40 +186,6 @@ class Pay extends Base
                 'timestamp' => $result['timestamp'],
             ];
             $result['sign'] = $this->MakeSign($value);
-    
-            if (is_array($result)) {
-                return $result;
-            } else {
-                return false;
-            }
-        } else if ($data['pay_type'] == 3) {
-            vendor('wxpay.WxPayApi');
-    
-            $conf = config('pay.wxpay');
-            // 商品名称
-            $subject = $data['name'];
-            // 订单号，示例代码使用时间值作为唯一的订单ID号
-            $total = $data['pay_total'];
-            $out_trade_no = $data['order_sn'];
-            $mchid = $conf['mchid']; // 商户号
-            $appid = $conf['appId'];
-            $key = $conf['key'];
-//            $scene_info ='{"h5_info": {"type":"Android","app_name": "修真破苍穹","package_name": "com.yesgame.xzhen"}}';
-            $unifiedOrder = new \WxPayUnifiedOrder();
-            $unifiedOrder->SetAppid($appid);
-            $unifiedOrder->SetMch_id($mchid);//商户号
-            $unifiedOrder->SetBody($subject);//商品或支付单简要描述
-    
-            $unifiedOrder->SetOut_trade_no($out_trade_no);
-//            $unifiedOrder->SetProduct_id($scene_info);
-    
-    
-            $unifiedOrder->SetTotal_fee($total);
-            $unifiedOrder->SetNotify_url($conf['notify_url']);
-            $unifiedOrder->SetTrade_type("MWEB");
-            $result = \WxPayApi::unifiedOrder($unifiedOrder);
-    
-            $result['timestamp'] = 1533790140;
     
             if (is_array($result)) {
                 return $result;

@@ -11,6 +11,7 @@ use think\Db;
 use think\Request;
 use think\Controller;
 use think\Loader;
+use think\Log;
 class Notify extends Controller
 {
     /**
@@ -282,76 +283,116 @@ class Notify extends Controller
     /**
      * 百度回调  暂未启用
      */
-    public function baidu_notify()
+    public function any_notify()
     {
-        defined('LOGIN_CHECK_URL')        or define('LOGIN_CHECK_URL',          'http://oauth.anysdk.com/api/User/LoginOauth/');
-        defined('ADTRACKING_REPORT_URL')  or define('ADTRACKING_REPORT_URL',    'http://pay.anysdk.com/v5/AdTracking/Submit/');
-        defined('DEBUG_MODE')             or define('DEBUG_MODE',               FALSE);
+        defined('LOGIN_CHECK_URL') or define('LOGIN_CHECK_URL', 'http://oauth.anysdk.com/api/User/LoginOauth/');
+        defined('ADTRACKING_REPORT_URL') or define('ADTRACKING_REPORT_URL', 'http://pay.anysdk.com/v5/AdTracking/Submit/');
+        defined('DEBUG_MODE') or define('DEBUG_MODE', false);
     
         // 游戏ID              前往dev.anysdk.com => 游戏列表 获取
-        defined('ANYSDK_GAME_ID')         or define('ANYSDK_GAME_ID', 639797331);
+        defined('ANYSDK_GAME_ID') or define('ANYSDK_GAME_ID', 639797331);
         // 增强密钥             前往dev.anysdk.com => 游戏列表 获取，此参数请严格保密
-        defined('ANYSDK_ENHANCED_KEY')    or define('ANYSDK_ENHANCED_KEY','ODNjNmY3ZWEyMWY1MWY3ZGZhNTA');
+        defined('ANYSDK_ENHANCED_KEY') or define('ANYSDK_ENHANCED_KEY', 'ODNjNmY3ZWEyMWY1MWY3ZGZhNTA');
         // private_key        前往dev.anysdk.com => 游戏列表 获取
-        defined('ANYSDK_PRIVATE_KEY')     or define('ANYSDK_PRIVATE_KEY','58D00BD80CF7AB095318C357D140300A');
+        defined('ANYSDK_PRIVATE_KEY') or define('ANYSDK_PRIVATE_KEY', '58D00BD80CF7AB095318C357D140300A');
         /**
          * 如果你想配合dev后台的“模拟通知游服”功能进行内网调试，请取消注释此响应头设置代码。
-         *
-        header("Access-Control-Allow-Origin: http://dev.anysdk.com");
+         *  header("Access-Control-Allow-Origin: http://dev.anysdk.com");
          */
     
-        $payment_params = $_REQUEST;
+        $payment_params = $_POST;
+        Log::record('[request_data] ' . var_export($payment_params, true), 'Notify_any');
+    
         $anysdk = new \Sdk_AnySDK(ANYSDK_ENHANCED_KEY, ANYSDK_PRIVATE_KEY);
     
         /**
          * 设置调试模式
-         *
          */
         $anysdk->setDebugMode(\Sdk_AnySDK::DEBUG_MODE_ON);
     
         /**
          * ip白名单检查
-         *
-        $anysdk->pushIpToWhiteList('127.0.0.1');
-        $anysdk->checkIpWhiteList() or die(Sdk_AnySDK::PAYMENT_RESPONSE_FAIL . 'ip');
+         * $anysdk->pushIpToWhiteList('127.0.0.1');
+         * $anysdk->checkIpWhiteList() or die(Sdk_AnySDK::PAYMENT_RESPONSE_FAIL . 'ip');
          */
     
         /**
          * SDK默认只检查增强签名，如果要检查普通签名和增强签名，则需要此设置
-         *
          */
         $anysdk->setPaymentSignCheckMode(\Sdk_AnySDK::PAYMENT_SIGN_CHECK_MODE_BOTH);
         $check_sign = $anysdk->checkPaymentSign($payment_params);
+    
+        Log::record('[check_sign] ' . var_export($check_sign, true), 'Notify_any');
+    
         if (!$check_sign) {
-            echo $anysdk->getDebugInfo(), "\n=====我是分割线=====\n";
-            die(\Sdk_AnySDK::PAYMENT_RESPONSE_FAIL . 'sign_error');
+            return \Sdk_AnySDK::PAYMENT_RESPONSE_FAIL . 'sign_error';
         }
     
         /**
          * 检查订单状态，1为成功
          */
         if (intval($anysdk->getPaymentStatus()) !== \Sdk_AnySDK::PAYMENT_STATUS_SUCCESS) {
-            die(\Sdk_AnySDK::PAYMENT_RESPONSE_OK);
+            Log::record('[getPaymentStatus] ' . var_export(intval($anysdk->getPaymentStatus()), true), 'Notify_any');
+            return \Sdk_AnySDK::PAYMENT_RESPONSE_OK;
         }
     
         /**
          * 获取支付通知详细参数
-         *
-        $amount = $anysdk->getPaymentAmount();
-        $product_id = $anysdk->getPaymentProductId();
-        $product_name = $anysdk->getPaymentProductName();
-        $product_count = $anysdk->getPaymentProductCount();
-        $channel_product_id = $anysdk->getPaymentChannelProductId();
-        $user_id = $anysdk->getPaymentUserId();
-        $game_user_id = $anysdk->getPaymentGameUserId();
-        $order_id = $anysdk->getPaymentOrderId();
-        $channel_order_id = $anysdk->getPaymentChannelOrderId();
-        $private_data = $anysdk->getPaymentPrivateData();
+         * $amount = $anysdk->getPaymentAmount();
+         * $product_name = $anysdk->getPaymentProductName();
+         * $product_count = $anysdk->getPaymentProductCount();
+         * $channel_product_id = $anysdk->getPaymentChannelProductId();
+         * $order_id = $anysdk->getPaymentOrderId();
+         * $channel_order_id = $anysdk->getPaymentChannelOrderId();
+         * $private_data = $anysdk->getPaymentPrivateData();
          */
+       
+        $game_user_id = $anysdk->getPaymentGameUserId();
+        $product_id = $anysdk->getPaymentProductId();
+        $user_id = $anysdk->getPaymentUserId();
+        $channel_number = $anysdk->getPaymentChannelNumber();
+        $pay_time = $anysdk->getPaymentTime();
     
-        echo $anysdk->getDebugInfo(), "\n=====我是分割线=====\n";
-        echo \Sdk_AnySDK::PAYMENT_RESPONSE_OK;
+        //获取商品信息
+        $id = $product_id;
+        $goods = config('pay.goods');
+        //订单入库
+        $user = \app\api\model\User::findMap(['user_id' => $game_user_id]);
+        if (empty($user)) {
+            return ' error用户不存在';
+        }
+    
+        $info['order_sn'] = guid();
+        $info['goods_id'] = $product_id;
+        $info['user_id'] = $user->user_id;
+        $info['username'] = $user->username;
+        $info['pay_type'] = 100;
+        $info['pay_status'] = 1;  //订单状态1未付款2已付款3已到账
+        $info['create_ip'] = request()->ip();
+        $info['time_start'] = date('Y-m-d H:i:s', time());
+        $data = array_merge($goods[$id], $info);
+    
+        $res = Db::name("order")->insert($data);
+//            入库完成，回调
+        if ($res) {
+            $order = Db::name('order')->where('order_sn', $data['order_sn'])->find();
+            $param = [];
+            $param['pay_status'] = 2;
+            $param['transaction_id'] = $channel_number;
+            $param['receipt_amount'] = $goods[$id]['pay_total'];
+            $param['buyer_id'] = isset($user_id) ? $user_id : '';
+            $param['time_end'] = isset($pay_time) ? $pay_time : date('Y-m-d H:i:s', time());
+        
+            $result = $this->upOrder($param, $order['order_sn'], $order);  // 更新
+            if ($result !== true) {
+              return "error 订单发放失败";
+            }
+        }
+        $response = $anysdk->getDebugInfo() . "\n=====我是分割线=====\n";
+        Log::record('[debug_info] ' . var_export($response, true), 'Notify_any');
+        return  \Sdk_AnySDK::PAYMENT_RESPONSE_OK;
     }
+    
     private function upOrder($param = [], $order_sn = '', $order = '')
     {
         Db::startTrans();

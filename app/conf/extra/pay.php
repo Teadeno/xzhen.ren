@@ -48,7 +48,7 @@ return [
         ],
         'djls100' => [
             'name' => '购买100顶级灵石',
-            'pay_total' => 1.00,
+            'pay_total' => 100,
             'num' => 100,
             'type' => 4,
             'describe' => '1元购买100顶级灵石',

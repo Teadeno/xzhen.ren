@@ -2,10 +2,11 @@
 
 namespace app\api\controller;
 
+use app\api\exception\ExceptionHandler;
 use think\Controller;
 use think\Db;
 use think\Loader;
-
+use app\api\exception\ShowException;
 /**
  * Created by PhpStorm.
  * User: lingqiu
@@ -14,6 +15,12 @@ use think\Loader;
  */
 class Index extends \app\base\controller\Base
 {
+    public function index(){
+        
+    
+        
+     
+    }
     
     public function upgrade()
     {
