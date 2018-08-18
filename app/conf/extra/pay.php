@@ -34,14 +34,14 @@ return [
         ],
         'yk12' => [
             'name' => '月卡购买',
-            'pay_total' => 12,
+            'pay_total' => 1200,
             'num' => 1,
             'type' => 2,
             'describe' => '购买12元月卡',
         ],
-        'zsk198' => [
+        'xzzsk198' => [
             'name' => '终身卡购买',
-            'pay_total' => 198,
+            'pay_total' => 19800,
             'num' => 1,
             'type' => 3,
             'describe' => '购买198元终身卡',

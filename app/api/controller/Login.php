@@ -264,7 +264,7 @@ class Login extends \app\base\controller\Base
         $resp_arr['ext'] = $this->getRequestPost($this->showReturnCode(0, $list));
         $response = json_encode($resp_arr);
  
-//        Log::record('[ PARAM2 ] ' . var_export($response, true), 'return');
+        Log::record('[ PARAM2 ] ' . var_export($response, true), 'return');
         return is_scalar($response)? $response: json_encode($response);
     }
 

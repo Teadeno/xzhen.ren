@@ -5,6 +5,7 @@ namespace app\api\controller;
 
 
 use app\api\model\Activity;
+use app\api\model\Elixir;
 use app\api\model\UserResource;
 use app\api\model\WallMap;
 use think\Db;
@@ -34,7 +35,15 @@ class Notify extends Controller
                 'is_get' => 0,
             ];
         }
-        if (!Loader::model('Email')->saveAll($data)) return false;
+        /**
+         * 邮件关闭直接领取  暂时
+         */
+//        if (!Loader::model('Email')->saveAll($data)) return false;
+        foreach ($data as $key => $value){
+                $item = Loader::model('Email')->getAwardList($value['award_id'], true);
+                Loader::model('Email')->getAward($item, $value['user_id']);
+    
+        }
         return true;
     }
     
