@@ -15,7 +15,7 @@ class Activity extends Base
 
     public function activityCode()
     {
-        $this->post['code'] = 78523;
+    
         if (!isset($this->post['code'])) {
             return $this->showReturnWithCode(1001);
         }

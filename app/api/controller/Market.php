@@ -10,6 +10,7 @@ use app\api\model\ShopCbk;
 use app\api\model\User;
 use app\api\model\UserKnapsack;
 use app\api\model\UserResource;
+use think\Db;
 use think\Loader;
 use app\api\model\ShopHj;
 
@@ -151,10 +152,11 @@ class Market extends Base
             $start_time = date('Y-m-d 12:00:00', time());
             $ent_time = date('Y-m-d 24:00:00', time());
         }
-
-        $where = "create_time >= '{$start_time}' AND create_time <= '{$ent_time}'";
+    
+        $where = "user_id = {$this->user_id} AND  create_time >= '{$start_time}' AND create_time <= '{$ent_time}'";
         //刷新
         $user_resource = UserResource::findMap(['user_id' => $this->user_id]);
+        Db::startTrans();
         if ($status == 1) {
             if ($user_resource->lingshi < 5) {
                 return $this->showReturn('灵石不足');
@@ -162,9 +164,7 @@ class Market extends Base
             //刷新减少资源
             $user_resource->lingshi = $user_resource->lingshi - 5;
             $user_resource->save();
-            ShopHj::destroy(function ($query) use ($where) {
-                $query->where($where);
-            });
+            ShopCbk::destroy(['user_id' => $this->user_id]);
         }
         $list = ShopCbk::getListByMap($where);
         //增加
@@ -172,14 +172,15 @@ class Market extends Base
             //为空创建商品
             //古神精血  渡劫丹-
             Loader::model('shopcbk')->addGoods($this->user_id);
+    
             $list = ShopCbk::getListByMap($where);
         }
-
+        Db::commit();
         return $this->showReturnCode(0, $list);
     }
 
     /**
-     * 藏宝阁
+     * 藏宝阁购买
      * 购买道具
      */
     public function CbkBuyGoods()
@@ -188,6 +189,9 @@ class Market extends Base
 
         if (!isset($this->post['id'])) {
             return $this->showReturnWithCode(1001);
+        }
+        if (empty($this->post['num']) || $this->post['num'] <= 0) {
+            return $this->showReturn('购买数量不正确');
         }
         $map = ['user_id' => $this->user_id];
         $id = $this->post['id'];

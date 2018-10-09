@@ -10,8 +10,8 @@ namespace app\base\controller;
 
 
 use think\Controller;
-
-abstract class Base extends Controller
+use think\Log;
+class Base extends Controller
 {
 
     /**
@@ -45,13 +45,14 @@ abstract class Base extends Controller
      */
     public function showReturnCode($errnoe = '', $data = [], $errmsg = '')
     {
+        if ($errnoe === 100) $data = ['status' => 100];
         $return_data = [
             'message' => [
                 'version' => '1.0',
                 'body' => [
                     'errno' => 500,
                     'errmsg' => '未定义消息',
-                    'data' => $errnoe === 0 ? $data : [],
+                    'data' => $data,
                 ]
             ]
         ];
@@ -62,7 +63,7 @@ abstract class Base extends Controller
         } else if (isset(ReturnCode::$return_code[$errnoe])) {
             $return_data['message']['body']['errmsg'] = ReturnCode::$return_code[$errnoe];
         }
-
+        Log::record('[ PARAM ] ' . var_export($return_data, true), 'return');
         return json_encode($return_data);
     }
 
@@ -73,7 +74,7 @@ abstract class Base extends Controller
      */
     public function showReturn($errmsg = '参数错误')
     {
-        return $this->showReturnCode(0, ['status' => 100], $errmsg);
+        return $this->showReturnCode(100, ['status' => 100], $errmsg);
     }
 
 }

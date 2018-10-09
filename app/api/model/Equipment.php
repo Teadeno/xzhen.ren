@@ -68,7 +68,7 @@ class Equipment extends Base
                 $equipment = Equipment::findMap(['equipment_id' => $user_equipment->equipment_id]);
                 $user_knapsack = [
                     'user_id' => $user_id,
-                    'name' => $equipment->equipment_name,
+                    'name' => $equipment->data['name'],
                     'type' => 2,
                     'goods_id' => $equipment->equipment_id,
                     'num' => 1,

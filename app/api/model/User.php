@@ -38,7 +38,7 @@ class User extends Base
                 'username' => $post['username'],
                 'sex' => $post['sex'],
                 'device' => $post['device'],
-                'source' => 1, // 写死先
+                'source' =>  $post['source'], // 写死先
                 'version' => $post['version'],
             ];
             //微信注册
@@ -102,13 +102,13 @@ class User extends Base
             $this->rollback();
             return false;
         }
-        //发送邮件
+   /*     //发送邮件
         $title = "新手攻略";
         $award_id = '';
         $content = $this->getUserLogContent('user', 0);
         if (!$this->sendEmail($user->user_id, $award_id, $title, $content)) {
             return false;
-        }
+        }*/
         $user_log = [
             'user_id' => $user->user_id,
             'type' => 6,
@@ -131,7 +131,7 @@ class User extends Base
     {
         switch ($value) {
             case 1:
-                return 'Android';
+                return 'IOS';
                 break;
             case 2:
                 return 'IOS';

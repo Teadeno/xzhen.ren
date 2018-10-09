@@ -4,6 +4,7 @@ namespace app\api\controller;
 
 use app\api\model\DayAward;
 use app\api\model\DayAwardLog;
+use app\api\model\Elixir;
 use app\api\model\Equipment;
 use app\api\model\Esoterica;
 use app\api\model\Price;
@@ -20,7 +21,6 @@ use think\Db;
 use think\Hook;
 use think\Loader;
 
-
 class User extends Base
 {
     /**
@@ -28,6 +28,7 @@ class User extends Base
      */
     public function top()
     {
+    
         //游戏头部信息  玩家昵称，性别，声望值，灵石 ，任务，任务同步时间
         //门派任务是否存在 同步更新位置   获取上次任务同步的时间是够超过10分钟  未超过不处理   超过查询任务奖励同步更新 调用任务同步行为
         $map = ['user_id' => $this->user_id];
@@ -37,8 +38,6 @@ class User extends Base
             Hook::listen('sync_mission', $data);
         }
         //检测玩家是否有未读邮件
-
-
         $unread_email = Loader::model('email')->Where(array_merge($map, ['is_read' => 0]))->count();
         $list = [
             'username' => $this->user->username,
@@ -56,12 +55,7 @@ class User extends Base
      */
     public function index()
     {
-        /* 前端需要数据  user表           username玩家昵称  sex性别
-                         user_resource 表  lingshi灵石数量  prestige声望数量  quality修为值    practice_speed修炼速度  realm_id当前境界名称 当前境界为几阶
-                         user_log 表    玩家日志信息
-        */
-        //在首页获取的时候增加修为值
-
+    
         $map = ['user_id' => $this->user_id];
         Hook::listen('sync_quality', $map);
         $user_resource = UserResource::findMap($map, 'quality, realm_id, create_time');
@@ -142,27 +136,27 @@ class User extends Base
 
         if (isset($this->post['type'])) $map['type'] = $this->post['type'];
         if (!isset($this->post['type']) && $this->post['price_type'] == 2) $map['type'] = ['neq', 1];
-
-        $data = Esoterica::getListByMap($map, 'esoterica_id,name, price_id,type, level, value, f_id, steps', 'steps,esoterica_id desc');
+    
+        $data = Esoterica::getListByMap($map, 'esoterica_id,name, price_id,type, level, value, f_id, steps', 'esoterica_id desc');
         $list = $imet = [];
         foreach ($data as $key => $value) {
             //判断阶数是否满级满级直接放入不是满级 则查找下级id
-            if ($value['steps'] == 11 || $value['f_id'] == 0) {
+            if ($value['f_id'] == 0) {
                 unset($value['f_id']);
                 $imet[] = $value;
             } else {
-                $list[] = Esoterica::findMap(['esoterica_id' => $value['f_id']], 'esoterica_id,name,level,steps, price_id, type, value')->toArray();
+                $list[] = Esoterica::findMap(['esoterica_id' => $value['f_id']], 'f_id,esoterica_id,name,level,steps, price_id, type, value')->toArray();
             }
         }
         $list = array_merge($imet, $list);
         foreach ($list as $key => $value) {
-            $list[$key]['name'] = explode('》', $value['name'])[0] . '》';
-            if ($value['steps'] !== 11) {
+            if ($value['f_id'] != 0) {
                 $list[$key]['level'] = $value['level'] . '星' . $value['steps'] . '重';
             } else {
                 $list[$key]['level'] = '顶级';
             }
-            $list[$key]['price_value'] = Price::findMap(['price_id' => $value['price_id'], 'type' => $this->post['price_type']], 'value')['value'];
+            $list[$key]['price_value'] = Price::findMap(['price_id' => $value['price_id'], 'type' => $this->post['price_type']], 'value')['value'] ?? 0;
+            
             unset($value['steps']);
             unset($list[$key]['price_id']);
         }
@@ -193,7 +187,7 @@ class User extends Base
         $M = new Esoterica();
         $esoterica = $M::findMap(['esoterica_id' => $this->post['esoterica_id']], 'esoterica_id, name, price_id, type, value,steps,f_id')->toArray();
         //判断是否为顶级功法
-        if ($esoterica['steps'] == 11) {
+        if ($esoterica['f_id'] == 0) {
             return $this->showReturn('功法已大成');
         }
         $value = Price::findMap(['price_id' => $esoterica['price_id'], 'type' => $this->post['type']], 'value')['value'];
@@ -217,7 +211,6 @@ class User extends Base
         $user_resource = UserResource::findMap(['user_id' => $this->user_id]);
         $type = $this->getType('resource')[$this->post['type']];
         if ($user_resource[$type] < $value) {
-
             return $this->showReturn($str . '不足');
         }
         //功法升级
@@ -257,7 +250,7 @@ class User extends Base
             return $this->showReturnWithCode(1001);
         }
         if ($this->post['knapsack_id'] == 0 || $this->post['num'] == 0) {
-            return $this->showReturn('数量不足');
+            return $this->showReturn('数量不正确');
         }
         $knapsack_goods = UserKnapsack::findMap(['knapsack_id' => $this->post['knapsack_id']]);
         Db::startTrans();
@@ -323,12 +316,20 @@ class User extends Base
      */
     public function elixirList()
     {
-        $this->post['level'] = 1;
+    
         if (!isset($this->post['level'])) {
             return $this->showReturnWithCode(1001);
         }
-        $data = UserElixirLog::getListByMap(['user_id' => $this->user_id, 'level' => $this->post['level']], 'level,type, num');
-
+        //获取该等级全部丹药
+        $data = Elixir::getListByMap(['level' => $this->post['level'], 'type' => ['neq', 10]], 'name, type, value', 'type');
+        foreach ($data as &$value) {
+            $map = [
+                'user_id' => $this->user_id,
+                'type' => $value['type'],
+                'level' => $this->post['level'],
+            ];
+            $value['num'] = UserElixirLog::findMap($map, 'num')->num ?? 0;
+        }
         return $this->showReturnCode(0, $data);
     }
 
@@ -376,9 +377,10 @@ class User extends Base
         $user_resource = UserResource::findMap($map, 'grow_award, month_num, vip,rmb')->toArray();
 
         $growth = empty($user_resource['grow_award']) ? 0 : 1;
-        $month_num = empty($user_resource['month_num']) ? 0 : $this->getMonthNum($user_resource['month_num']);
+        $month_num = empty($user_resource['month_num']) ? 0 : $this->getMonthNum($user_resource['month_num']) > 0 ? 1 : 0;
         $vip = empty($user_resource['vip']) ? 0 : 1;
         $rmb = empty($user_resource['rmb']) ? 0 : 1;
+    
         $list = [
             'growth' => $growth,
             'month_num' => $month_num,
@@ -430,7 +432,7 @@ class User extends Base
      */
     public function monthVip()
     {
-        //判断玩家是否购买成长基金
+        //判断玩家是否购买月卡
         $map = ['user_id' => $this->user_id];
         $user_esource = UserResource::findMap($map, 'month_num');
         $month_num = $user_esource->month_num;
@@ -471,7 +473,7 @@ class User extends Base
      */
     public function everVip()
     {
-        //判断玩家是否购买成长基金
+        //判断玩家是否购买终身卡
         $map = ['user_id' => $this->user_id];
         $user_esource = UserResource::findMap($map, 'vip');
         $vip = $user_esource->vip;
@@ -496,7 +498,7 @@ class User extends Base
 
         $day_award_log = [
             'user_id' => $this->user_id,
-            'type' => 1,
+            'type' => 2,
             'time' => time(),
         ];
         if (!DayAwardLog::create($day_award_log)) {
@@ -515,4 +517,5 @@ class User extends Base
         $award = $M->getAwardList($award_id);
         return $this->showReturnCode(0, $award);
     }
+    
 }

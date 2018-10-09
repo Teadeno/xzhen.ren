@@ -13,7 +13,7 @@ class Base extends \app\base\model\Base
      * @param int $time
      * @return int
      */
-    public static function getTime($time, $create_time): int
+    public static function getTime($time, $create_time)
     {
         return \app\api\controller\Base::getTime($time, $create_time);
     }
@@ -149,7 +149,8 @@ class Base extends \app\base\model\Base
                             'img_url' => $value['img_url'],
                             'describe' => $value['describe']
                         ];
-                        if (!self::addKnapsack($data, $knapsack_insert, $knapsack_update)) return false;
+                        if (!self::addKnapsack($data, $knapsack_insert, $knapsack_update))
+                            return false;
                         break;
                     default:   // 资源道具
                         //资源领取存入用户资源
@@ -235,9 +236,7 @@ class Base extends \app\base\model\Base
                     'num' => $data['num'] + $result['num']
                 ];
             } else {
-                if ($data['type'] == 3) {
-                    $data['name'] = explode('》', $data['name'])[0] . '》';
-                }
+               
                 $knapsack_insert[] = [
                     'user_id' => $data['user_id'],
                     'name' => $data['name'],
@@ -257,16 +256,20 @@ class Base extends \app\base\model\Base
                 if (Loader::model('user_knapsack')->isUpdate(false)->allowField(true)->insertAll($knapsack_insert) == 0) {
                     return false;
                 }
+            } else {
+                $insert = array_merge($insert, $knapsack_insert);
             }
-            $insert = $knapsack_insert;
+    
         }
         if (isset($knapsack_update)) {
             if ($update === false) {
                 if (Loader::model('user_knapsack')->isUpdate(true)->allowField(true)->save($knapsack_update, ['knapsack_id' => $result['knapsack_id'],]) == 0) {
                     return false;
                 }
+            } else {
+                $update[] = $knapsack_update;
             }
-            $update[] = $knapsack_update;
+           
         }
         return true;
     }

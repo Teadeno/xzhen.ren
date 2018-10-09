@@ -30,8 +30,8 @@ class Shop extends Base
         }
         //判断是否能够开启本层
         $user_resource = UserResource::findMap(['user_id' => $this->user_id]);
-
-        if ($user_resource->rmb < 50 * ($this->post['level'] - 1)) {
+        $limit_rmb = 50 * ($this->post['level'] -1);
+        if ($user_resource->rmb < $limit_rmb) {
             return $this->showReturn('开启条件不足');
         }
         if (isset($this->post['status'])) {
@@ -43,6 +43,7 @@ class Shop extends Base
 
         $where = "create_time >= '{$start_time}' AND create_time <= '{$ent_time}' AND level = {$this->post['level']}";
         //刷新
+        Db::startTrans();
         if ($status == 1) {
             //判断资源是否足够
             if ($user_resource->top_lingshi < 5) return $this->showReturn('顶级灵石不足');
@@ -58,14 +59,15 @@ class Shop extends Base
         //增加
         if (empty($data)) {
             //为空创建商品
+            ShopHj::destroy(['user_id' => $this->user_id]);
             Loader::model('shophj')->addGoods($this->user_id, $this->post['level']);
             $data = ShopHj::getListByMap($where, $field, 'type');
         }
-
+        Db::commit();
 
         $list = [];
         $list['top_lingshi'] = $user_resource->top_lingshi;
-        $list['tier_num'] = floor($user_resource->rmb / 50) >= 10 ? 10 : floor($user_resource->rmb / 50);
+        $list['tier_num'] = floor($user_resource->rmb / 50)+1 >= 10 ? 10 : floor($user_resource->rmb / 50)+1;
         foreach ($data as $value) {
             switch ($value['type']) {
                 case 1:

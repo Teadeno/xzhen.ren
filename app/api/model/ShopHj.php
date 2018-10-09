@@ -20,15 +20,13 @@ class ShopHj extends Base
     public function addGoods($user_id, $level)
     {
         try {
-            $this->startTrans();
-
             //折扣
             $discount = 1 - ($level - 1) * 0.05;  //每层减少0.05
             //功法
-            $school = School::getListByMap(['level' => $level], 'school_id');
+            $school = School::getListByMap(['level' => $level], 'school_id,level');
             $school_id = $school[rand(0, count($school) - 1)]['school_id'];
-
-            $info = Esoterica::getListByMap(['level' => $level, 'steps' => 1, 'school_id' => $school_id], 'esoterica_id');
+    
+            $info = Esoterica::getListByMap(['level' => $school[0]['level'], 'steps' => 1, 'school_id' => $school_id], 'esoterica_id');
             $info = array_column($info, 'esoterica_id');
             shuffle($info);
             $info = array_slice($info, 3);
@@ -39,7 +37,7 @@ class ShopHj extends Base
                 $data[] =
                     [
                         'user_id' => $user_id,
-                        'name' => explode('》', $value['name'])[0] . '》',
+                        'name' => $value['name'],
                         'type' => array_search('esoterica', $this->getType('knapsack_type')),
                         'goods_id' => $value['esoterica_id'],
                         'level' => $level,
@@ -69,9 +67,10 @@ class ShopHj extends Base
                     ];
             }
             //资源
+    
+            $resource_id = [1, 2, 4, 5, 6];
             if ($level > 3) $resource_id[] = 8;
             if ($level > 5) $resource_id[] = 7;
-            $resource_id = [1, 2, 4, 5, 6];
             $map['resource_id'] = ['in', $resource_id];
             $info = [];
             $info = Resource::getListByMap($map);
@@ -107,11 +106,10 @@ class ShopHj extends Base
                     ];
             }
             if (!$this->saveAll($data)) return false;
-
-            $this->commit();
+    
             return true;
         } catch (PDOException $exception) {
-            $this->rollback();
+    
             return false;
         }
     }

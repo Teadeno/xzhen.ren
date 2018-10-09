@@ -114,7 +114,7 @@ class Checkpoint extends Base
         if (empty($this->post['checkpoin_id'])) {
             return $this->showReturnWithCode(1001);
         }
-        if ($this->post['checkpoin_id'] > 1) {
+        if ($this->post['checkpoin_id'] > 3) {
             return $this->showReturn('暂未开放');
         }
         $levle = \app\api\model\Checkpoint::findMap(['checkpoin_id' => $this->post['checkpoin_id']], 'level')->level;
@@ -253,7 +253,7 @@ class Checkpoint extends Base
         //超过判断奖励是否领取   是  添加新的数据  返回状态码status  = 0  和20分钟时间    否 跳出弹框  让用户点击领取返回状态码 status = 1
 
         if (empty($this->post['checkpoin_id']) || empty($this->post['num'])) {
-            return $this->showReturnWithCode(1001);
+            return $this->showReturn('请选择挂图场景和次数');
         }
         //判断是否通关
         $succeed = UserCheckpoint::findMap(['user_id' => $this->user_id, 'checkpoin_id' => $this->post['checkpoin_id']]);

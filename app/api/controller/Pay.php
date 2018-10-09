@@ -19,19 +19,48 @@ class Pay extends Base
     {
 
         $param = $this->post;
-        $param['pay_type'] = 2;
-
         $id = $param['goods_id'];
         $goods = config('pay.goods');
 
-        $data = array_merge($goods[$id], ['pay_type' => $param['pay_type']]);
-
-        $result = $this->pay($data);
+        $data = array_merge($goods[$id], ['pay_type' => $param['pay_type']], ['goods_id'=> $id]);
+        if ($param['pay_type'] == 100){
+            $result = $this->anySdkPay($data);
+        }elseif($param['pay_type'] == 1 || $param['pay_type'] == 2 ){
+            $result = $this->pay($data);
+        }
+      
         if ($result === false) {
             return $this->showReturn('发生未知错误');
         } else {
+    
             return $this->showReturnCode(0, $result);
         }
+    }
+    /**
+     * anySdkPay支付
+     */
+    public function anySdkPay($param)
+    {
+        $user = \app\api\model\User::findMap(['user_id' => $this->user_id]);
+        $userResource = UserResource::findMap(['user_id' => $this->user_id]);
+        $data = [];
+        $data['Product_Id'] = $param['goods_id'];
+        $data['Product_Name'] = $param['name'];
+        $data['Product_Price'] = (string)($param['pay_total'] /100) ;
+        $data['Product_Count'] = "1";
+        $data['Product_Desc'] = $param['describe'];
+        $data['Coin_Name'] = "灵石";
+        $data['Coin_Rate'] = "100";
+        $data['Role_Id'] = (string) $this->user_id;
+        $data['Role_Name'] =  $user->username;
+        $data['Role_Grade'] = (string) $userResource->realm_id;
+        $data['Role_Balance'] = (string) $userResource->top_lingshi / 100;
+        $data['Role_Balance'] =  (string) $userResource->top_lingshi;
+        $data['Vip_Level'] = "1";
+        $data['Party_Name'] = "1";
+        $data['Server_Id'] = "1";
+        $data['Server_Name'] = "1";
+        return $data;
     }
 
     /**
@@ -45,7 +74,7 @@ class Pay extends Base
         if (!isset($param['name']) || !$param['name']) {
             return false;
         }
-        if (!isset($param['price']) || !$param['price']) {
+        if (!isset($param['pay_total']) || !$param['pay_total']) {
             return false;
         }
         if (!isset($param['type']) || !$param['type']) {
@@ -65,6 +94,7 @@ class Pay extends Base
 
         $data = [];
         $data['order_sn'] = guid();
+        $data['goods_id'] = $param['goods_id'];
         $data['user_id'] = $this->user_id;
         $data['name'] = $param['name'];
         $data['username'] = $user->username;
@@ -72,7 +102,7 @@ class Pay extends Base
         $data['num'] = isset($param['num']) ? $param['num'] : 1;
         $data['pay_type'] = $param['pay_type'];
         $data['type'] = $param['type'];
-        $data['pay_total'] = $param['price'];
+        $data['pay_total'] = $param['pay_total'];
         $data['pay_status'] = 1;  //订单状态1未付款2已付款3已到账
         $data['create_ip'] = request()->ip();
         $data['time_start'] = date('Y-m-d H:i:s', time());
@@ -119,7 +149,8 @@ class Pay extends Base
 //        $responseArray = [];
 //         parse_str($response,$responseArray);
             // 注意：这里不需要使用htmlspecialchars进行转义，直接返回即可
-            return $response;
+            echo $response;
+            die;
         } elseif ($data['pay_type'] == 2) { //微信
             vendor('wxpay.WxPayApi');
 
@@ -131,28 +162,68 @@ class Pay extends Base
             $out_trade_no = $data['order_sn'];
             $mchid = $conf['mchid']; // 商户号
             $appid = $conf['appId'];
-            $key = $conf['key'];
-
             $unifiedOrder = new \WxPayUnifiedOrder();
             $unifiedOrder->SetAppid($appid);
             $unifiedOrder->SetMch_id($mchid);//商户号
             $unifiedOrder->SetBody($subject);//商品或支付单简要描述
-            $unifiedOrder->SetKey($key);//商品或支付单简要描述
+
             $unifiedOrder->SetOut_trade_no($out_trade_no);
             $unifiedOrder->SetTotal_fee($total);
             $unifiedOrder->SetNotify_url($conf['notify_url']);
             $unifiedOrder->SetTrade_type("APP");
             $result = \WxPayApi::unifiedOrder($unifiedOrder);
+            $result['timestamp'] = time();
+//            $str = 'appid='.$result['appid'].'&noncestr='.$result['nonce_str'].'&package=Sign=WXPay&partnerid='.$mchid.'&prepayid='.$result['prepay_id'].'&timestamp='.$result['timestamp'];
+////重新生成签名
+//            $result['sign'] = strtoupper(md5($str.'&key='.\WxPayConfig::KEY));
+    
+            $value = [
+                'appid' => $result['appid'],
+                'noncestr' => $result['nonce_str'],
+                'partnerid' => $result['mch_id'],
+                'prepayid' => $result['prepay_id'],
+                'package' => "Sign=WXPay",
+                'timestamp' => $result['timestamp'],
+            ];
+            $result['sign'] = $this->MakeSign($value);
+    
             if (is_array($result)) {
                 return $result;
             } else {
                 return false;
             }
-        } elseif ($data['pay_type'] == 3) {
-
         }
     }
-
+    
+    public function MakeSign($value)
+    {
+        //签名步骤一：按字典序排序参数
+        ksort($value);
+        $string = $this->ToUrlParams($value);
+        //签名步骤二：在string后加入KEY
+        $string = $string . "&key=" . \WxPayConfig::KEY;
+        //签名步骤三：MD5加密
+        $string = md5($string);
+        //签名步骤四：所有字符转为大写
+        $result = strtoupper($string);
+        return $result;
+    }
+    
+    /**
+     * 格式化参数格式化成url参数
+     */
+    public function ToUrlParams($values)
+    {
+        $buff = "";
+        foreach ($values as $k => $v) {
+            if ($k != "sign" && $v != "" && !is_array($v)) {
+                $buff .= $k . "=" . $v . "&";
+            }
+        }
+        
+        $buff = trim($buff, "&");
+        return $buff;
+    }
     /**
      * 支付宝回调
      */
@@ -433,7 +504,7 @@ class Pay extends Base
             if (empty($user)) {
                 return $this->showReturn('用户不存在');
             }
-            $data = [];
+
             $info['order_sn'] = guid();
             $info['user_id'] = $this->user_id;
             $info['username'] = $user->username;

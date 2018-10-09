@@ -128,10 +128,12 @@ class School extends Base
         //每个门派的功法是固定的可以用缓存  以school_  开头  加上门派id 为键值
         //获取缓存  存在值直接返回  不存在获取并添加缓存
         $map = ['user_id' => $this->user_id];
-        $user_resource = UserResource::findMap($map, 'school_id, position_id, school_contribution')->toArray();
+        $user_resource = UserResource::findMap($map, 'school_id, position_id, school_contribution');
+        $shcool = S::findMap(['school_id' => $user_resource->school_id]);
         $map = [
-            'school_id' => $user_resource['school_id'],
-            'steps' => 1
+            'school_id' => $user_resource->school_id,
+            'steps' => 1,
+            'level' => $shcool->level,
         ];
 
         $list = Esoterica::getListByMap($map, 'esoterica_id, name, price_id, type, value, img_url');
@@ -460,7 +462,7 @@ class School extends Base
         }
         $start_time = date('Y-m-d 00:00:00', time());
         $ent_time = date('Y-m-d 24:00:00', time());
-        $count = Db::name('goods_buy_log')->where($map)->where('create_time', '>=', $start_time)->where('create_time', '<=', $ent_time)->count();
+        $count = Db::name('goods_buy_log')->where($where)->where('create_time', '>=', $start_time)->where('create_time', '<=', $ent_time)->count();
         if ($goods['limit'] <= $count) {
             return $this->showReturn('今日已达上限');
         }

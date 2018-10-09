@@ -27,12 +27,12 @@
 
 
 
-# �����ThinkPHP V5α��̬����ʾ�� ��ȥ�����´���ǰ�ߵ�#�ż�����Ч
+
 
 if (!-e $request_filename) {
     rewrite  ^(.*)$  /index.php?s=/$1  last;
    break;
-   }
+  }
 
 
 
